@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+env/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# Output directory (로컬 백업 파일들)
+output/
+
+# Development files
+*.md
+README*
+
+# Git
+.git/
+.gitignore
+
+# Testing files
+test_*
+*_test.py
+tests/
+
+# Temporary files
+*.tmp
+*.temp
+temp/

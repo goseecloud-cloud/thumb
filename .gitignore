@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+.venv/
+
+# Runtime outputs
+output/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Local env
+.env

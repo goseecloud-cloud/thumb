@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  thumbnail-generator:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: thumbnail-generator-api
+    ports:
+      - "8866:8866"  # 호스트 8866 포트를 컨테이너 8866 포트로 매핑
+    volumes:
+      - ./output:/app/output  # 생성된 이미지 저장용
+      - ./fonts:/app/fonts    # 폰트 파일용
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=Asia/Seoul
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8866/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - thumbnail-network
+
+networks:
+  thumbnail-network:
+    driver: bridge
