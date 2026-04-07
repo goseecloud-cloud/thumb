@@ -217,13 +217,24 @@
     .drop-zone {
       border: 2px dashed var(--border);
       border-radius: var(--radius);
-      padding: 64px 32px;
+      min-height: 320px;
       text-align: center;
       cursor: pointer;
       transition: var(--transition);
       background: var(--surface2);
       position: relative;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* 빈 상태 콘텐츠 */
+    .drop-zone-empty {
+      padding: 64px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
     }
     .drop-zone::before {
       content: '';
@@ -232,6 +243,7 @@
       background: radial-gradient(circle at 50% 50%, var(--accent-glow), transparent 70%);
       opacity: 0;
       transition: var(--transition);
+      pointer-events: none;
     }
     .drop-zone:hover,
     .drop-zone.dragover {
@@ -240,6 +252,15 @@
     }
     .drop-zone:hover::before,
     .drop-zone.dragover::before { opacity: 1; }
+    /* 이미지가 올라왔을 때 drop-zone */
+    .drop-zone.has-image {
+      border-style: solid;
+      border-color: var(--accent);
+      padding: 0;
+      min-height: 320px;
+      cursor: default;
+    }
+    .drop-zone.has-image::before { display: none; }
     .drop-icon {
       width: 72px;
       height: 72px;
@@ -254,12 +275,12 @@
     }
     .drop-zone:hover .drop-icon { border-color: var(--accent); background: rgba(91,94,244,0.1); }
     .drop-icon svg { width: 32px; height: 32px; color: var(--text-muted); }
-    .drop-zone h3 {
+    .drop-zone-empty h3 {
       font-size: 18px;
       font-weight: 700;
       margin-bottom: 8px;
     }
-    .drop-zone p {
+    .drop-zone-empty p {
       font-size: 13px;
       color: var(--text-muted);
       margin-bottom: 24px;
@@ -269,7 +290,9 @@
       inset: 0;
       opacity: 0;
       cursor: pointer;
+      z-index: 2;
     }
+    .drop-zone.has-image input[type="file"] { pointer-events: none; }
     .btn-upload {
       display: inline-flex;
       align-items: center;
@@ -292,49 +315,82 @@
       color: white;
     }
 
-    /* ── Preview strip ── */
-    #preview-wrap {
-      margin-top: 20px;
+    /* ── 드롭존 내 이미지 미리보기 ── */
+    .drop-preview {
+      position: absolute;
+      inset: 0;
       display: none;
     }
-    #preview-wrap.visible { display: block; }
-    .preview-inner {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 16px;
+    .drop-preview.visible { display: block; }
+    .drop-preview-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    /* 이미지 위 오버레이 (파일명 + 삭제 버튼) */
+    .drop-preview-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 50%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 20px;
+    }
+    .drop-preview-meta {
       display: flex;
       align-items: center;
-      gap: 16px;
+      justify-content: space-between;
+      gap: 12px;
     }
-    #preview-img {
-      width: 80px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-    .preview-info { flex: 1; min-width: 0; }
-    .preview-name {
+    .drop-preview-info .drop-preview-name {
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
+      color: white;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      max-width: 300px;
     }
-    .preview-size { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-    .btn-remove {
-      width: 32px; height: 32px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--surface3);
-      color: var(--text-muted);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer;
-      transition: var(--transition);
+    .drop-preview-info .drop-preview-size {
+      font-size: 12px;
+      color: rgba(255,255,255,0.65);
+      margin-top: 3px;
+    }
+    /* 이미지 위에 뜨는 교체/삭제 버튼 */
+    .drop-preview-actions {
+      display: flex;
+      gap: 8px;
       flex-shrink: 0;
     }
-    .btn-remove:hover { border-color: var(--danger); color: var(--danger); }
+    .dp-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+    .dp-btn-change {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      backdrop-filter: blur(6px);
+    }
+    .dp-btn-change:hover { background: rgba(255,255,255,0.28); }
+    .dp-btn-remove {
+      background: rgba(239,68,68,0.25);
+      color: #fca5a5;
+      backdrop-filter: blur(6px);
+    }
+    .dp-btn-remove:hover { background: rgba(239,68,68,0.5); color: white; }
+    /* 숨겨진 교체용 파일 인풋 */
+    #file-input-change { display: none; }
 
     /* ── Step 2 layout ── */
     .step2-grid {
@@ -759,29 +815,45 @@
         </div>
       </div>
       <div class="card-body">
-        <div class="drop-zone" id="drop-zone">
-          <input type="file" id="file-input" accept="image/*" />
-          <div class="drop-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
-          <h3>이미지를 여기에 놓으세요</h3>
-          <p>또는 클릭해서 파일을 선택하세요</p>
-          <span class="btn-upload">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/></svg>
-            파일 선택
-          </span>
-        </div>
+        <!-- 교체용 숨김 파일 인풋 -->
+        <input type="file" id="file-input-change" accept="image/*" />
 
-        <div id="preview-wrap">
-          <div class="preview-inner">
-            <img id="preview-img" src="" alt="미리보기" />
-            <div class="preview-info">
-              <div class="preview-name" id="preview-name">-</div>
-              <div class="preview-size" id="preview-size">-</div>
+        <div class="drop-zone" id="drop-zone">
+          <!-- 기본(빈) 상태 -->
+          <input type="file" id="file-input" accept="image/*" />
+          <div class="drop-zone-empty" id="drop-empty">
+            <div class="drop-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
-            <button class="btn-remove" onclick="removeFile()" title="제거">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
+            <h3>이미지를 여기에 놓으세요</h3>
+            <p>또는 클릭해서 파일을 선택하세요</p>
+            <span class="btn-upload">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/></svg>
+              파일 선택
+            </span>
+          </div>
+
+          <!-- 이미지 미리보기 (드롭존 내부) -->
+          <div class="drop-preview" id="drop-preview">
+            <img class="drop-preview-img" id="preview-img" src="" alt="미리보기" />
+            <div class="drop-preview-overlay">
+              <div class="drop-preview-meta">
+                <div class="drop-preview-info">
+                  <div class="drop-preview-name" id="preview-name">-</div>
+                  <div class="drop-preview-size" id="preview-size">-</div>
+                </div>
+                <div class="drop-preview-actions">
+                  <button class="dp-btn dp-btn-change" onclick="triggerChange()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/></svg>
+                    교체
+                  </button>
+                  <button class="dp-btn dp-btn-remove" onclick="removeFile()">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    삭제
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1017,16 +1089,38 @@
     reader.readAsDataURL(file);
     document.getElementById('preview-name').textContent = file.name;
     document.getElementById('preview-size').textContent = formatBytes(file.size);
-    document.getElementById('preview-wrap').classList.add('visible');
+
+    // 드롭존 → 이미지 모드 전환
+    const dz = document.getElementById('drop-zone');
+    dz.classList.add('has-image');
+    document.getElementById('drop-empty').style.display = 'none';
+    document.getElementById('drop-preview').classList.add('visible');
+
     document.getElementById('btn-next-1').disabled = false;
   }
 
   function removeFile() {
     selectedFile = null;
     fileInput.value = '';
-    document.getElementById('preview-wrap').classList.remove('visible');
+    document.getElementById('file-input-change').value = '';
+
+    // 드롭존 → 빈 상태로 복원
+    const dz = document.getElementById('drop-zone');
+    dz.classList.remove('has-image');
+    document.getElementById('drop-empty').style.display = '';
+    document.getElementById('drop-preview').classList.remove('visible');
+    document.getElementById('preview-img').src = '';
+
     document.getElementById('btn-next-1').disabled = true;
   }
+
+  // 교체 버튼 → 숨김 파일 인풋 트리거
+  function triggerChange() {
+    document.getElementById('file-input-change').click();
+  }
+  document.getElementById('file-input-change').addEventListener('change', function() {
+    if (this.files[0]) setFile(this.files[0]);
+  });
 
   function formatBytes(bytes) {
     if (bytes < 1024) return bytes + ' B';
