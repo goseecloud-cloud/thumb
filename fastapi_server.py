@@ -39,6 +39,15 @@ class ThumbnailResponse(BaseModel):
     error: str | None = None
 
 
+# 폰트 파일 매핑
+FONT_MAP = {
+    "paperlogy": "fonts/Paperlogy-7Bold.ttf",
+    "nanum":     "fonts/NanumGothicBold.ttf",
+    "blackhan":  "fonts/BlackHanSans.ttf",
+    "noto":      "fonts/NotoSansKR.ttf",
+}
+
+
 def _create_thumbnail_image(
     generator: ThumbnailGenerator,
     source_image: Image.Image,
@@ -48,6 +57,7 @@ def _create_thumbnail_image(
     border: bool = True,
     text_color: str = "white",
     overlay_opacity: float = 0.5,
+    font_key: str = "paperlogy",
 ) -> Image.Image:
     image = source_image
     if image.mode != "RGB":
@@ -75,6 +85,11 @@ def _create_thumbnail_image(
 
     if font_size:
         generator.default_font_size = font_size
+
+    # 폰트 경로 설정
+    font_rel = FONT_MAP.get(font_key, FONT_MAP["paperlogy"])
+    font_abs = str(BASE_DIR / font_rel)
+    generator.font_paths = [font_abs] + generator.font_paths
 
     image = generator.add_text_overlay_custom(image, title, text_color)
     return image
@@ -140,6 +155,18 @@ async def generate_thumbnail_by_url(payload: ThumbnailRequest, request: Request)
         raise HTTPException(status_code=500, detail=f"썸네일 생성 중 오류가 발생했습니다: {e}")
 
 
+@app.get("/fonts/{font_key}")
+async def serve_font(font_key: str):
+    """프론트엔드 캔버스 미리보기용 폰트 파일 서빙"""
+    font_rel = FONT_MAP.get(font_key)
+    if not font_rel:
+        raise HTTPException(status_code=404, detail="폰트를 찾을 수 없습니다.")
+    font_path = BASE_DIR / font_rel
+    if not font_path.exists():
+        raise HTTPException(status_code=404, detail="폰트 파일이 없습니다.")
+    return FileResponse(str(font_path), media_type="font/ttf")
+
+
 @app.post("/generate-file", response_model=ThumbnailResponse)
 async def generate_thumbnail_by_file(
     request: Request,
@@ -150,6 +177,7 @@ async def generate_thumbnail_by_file(
     border: str = Form("true"),
     text_color: str = Form("white"),
     overlay_opacity: float = Form(0.5),
+    font_key: str = Form("paperlogy"),
 ):
     if not title.strip():
         raise HTTPException(status_code=400, detail="title은 필수입니다.")
@@ -170,6 +198,7 @@ async def generate_thumbnail_by_file(
             border=(border.lower() == "true"),
             text_color=text_color,
             overlay_opacity=overlay_opacity,
+            font_key=font_key,
         )
         return _finalize_response(
             request,
