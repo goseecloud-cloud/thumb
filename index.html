@@ -1682,17 +1682,25 @@
     document.getElementById('coupang-overlay').classList.remove('show');
   }
 
-  function confirmCoupang() {
+  async function confirmCoupang() {
     closeCoupangModal();
     // 새 창으로 쿠팡 열기
     window.open('https://link.coupang.com/a/ejPGj5', '_blank');
-    // 원창에서 이미지 자동 다운로드
-    const a = document.createElement('a');
-    a.href = pendingDownloadUrl;
-    a.download = pendingDownloadName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    // Blob으로 받아서 강제 다운로드 (브라우저가 새 탭으로 여는 것 방지)
+    try {
+      const res = await fetch(pendingDownloadUrl);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = pendingDownloadName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 3000);
+    } catch (e) {
+      showToast('다운로드 중 오류가 발생했습니다.', 'error');
+    }
   }
 
   // ── Toast ──
@@ -1717,7 +1725,7 @@
     새 창으로 열리고, 썸네일이 자동으로 다운로드됩니다.</p>
     <div class="modal-btns">
       <button class="btn btn-outline" onclick="closeCoupangModal()">취소</button>
-      <button class="btn btn-primary" onclick="confirmCoupang()">확인 &amp; 다운로드</button>
+      <button class="btn btn-primary" onclick="confirmCoupang()">확인 &<br> 다운로드</button>
     </div>
     <p class="modal-notice">※ 이 링크는 쿠팡 파트너스 링크로, 수익의 일부가 서비스 운영에 사용됩니다.</p>
   </div>
