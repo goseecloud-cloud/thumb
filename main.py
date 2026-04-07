@@ -166,30 +166,34 @@ class ThumbnailGenerator:
 
     def add_border(self, image, margin=60, border_width=8):
         """
-        이미지에 흰색 테두리 추가
-        
+        이미지에 흰색 2중 테두리 추가 (바깥선 + 안쪽선)
+
         Args:
             image (PIL.Image): 원본 이미지
             margin (int): 가장자리로부터의 여백 (px)
-            border_width (int): 테두리 두께 (px)
-            
+            border_width (int): 선 두께 (px)
+
         Returns:
-            PIL.Image: 테두리가 추가된 이미지
+            PIL.Image: 2중 테두리가 추가된 이미지
         """
         draw = ImageDraw.Draw(image)
         width, height = image.size
-        
-        # 테두리 좌표 계산
-        x1 = margin
-        y1 = margin
-        x2 = width - margin
-        y2 = height - margin
-        
-        # 흰색 테두리 그리기 (여러번 그려서 두께 구현)
-        for i in range(border_width):
-            draw.rectangle([x1-i, y1-i, x2+i, y2+i], outline='white', width=1)
-        
-        print(f"테두리 추가 완료 (여백: {margin}px, 두께: {border_width}px)")
+
+        gap = border_width + 6  # 두 선 사이 간격
+
+        # 바깥쪽 선
+        draw.rectangle(
+            [margin, margin, width - margin, height - margin],
+            outline='white', width=border_width
+        )
+        # 안쪽 선 (gap만큼 안으로)
+        inner = margin + gap
+        draw.rectangle(
+            [inner, inner, width - inner, height - inner],
+            outline='white', width=border_width
+        )
+
+        print(f"2중 테두리 추가 완료 (여백: {margin}px, 두께: {border_width}px, 간격: {gap}px)")
         return image
 
     def load_font(self, font_size):
@@ -439,18 +443,19 @@ class ThumbnailGenerator:
         font = self.load_font(font_size)
         lines = self.wrap_text(title_text, font, text_area_width)
         total_width, total_height = self.calculate_multiline_text_size(lines, font, line_spacing)
-        
-        start_y = (height - total_height) // 2
         line_height = self.get_text_height(lines[0] if lines else "A", font)
+
+        # 전체 텍스트 블록을 이미지 정중앙에 배치 (상하 중앙)
+        start_y = (height - total_height) // 2
         current_y = start_y
-        
+
         for i, line in enumerate(lines):
             line_width = self.get_text_width(line, font)
             line_x = (width - line_width) // 2
             draw.text((line_x, current_y), line, fill=text_color, font=font)
             if i < len(lines) - 1:
                 current_y += int(line_height * line_spacing)
-        
+
         print(f"커스텀 텍스트 추가 완료: '{title_text}' ({len(lines)}줄, 폰트: {font_size}pt, 색상: {text_color})")
         return image
 
