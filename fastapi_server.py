@@ -43,7 +43,7 @@ class ThumbnailResponse(BaseModel):
 FONT_MAP = {
     "paperlogy": "fonts/Paperlogy-7Bold.ttf",
     "nanum":     "fonts/NanumGothicBold.ttf",
-    "blackhan":  "fonts/BlackHanSans.ttf",
+    "blackhan":  "fonts/GmarketSansBold.ttf",
     "noto":      "fonts/NotoSansKR.ttf",
 }
 
