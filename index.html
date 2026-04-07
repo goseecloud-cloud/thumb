@@ -1000,15 +1000,7 @@
               </div>
             </div>
 
-            <div class="form-group">
-              <label>폰트 크기</label>
-              <div class="font-size-row" id="font-size-btns">
-                <button class="font-size-btn" data-size="80" onclick="selectFontSize(this)">소형</button>
-                <button class="font-size-btn selected" data-size="140" onclick="selectFontSize(this)">중형</button>
-                <button class="font-size-btn" data-size="180" onclick="selectFontSize(this)">대형</button>
-                <button class="font-size-btn" data-size="220" onclick="selectFontSize(this)">특대형</button>
-              </div>
-            </div>
+
 
             <div class="form-group">
               <label>글자 색상</label>
@@ -1174,7 +1166,7 @@
   // ── State ──
   let selectedFile = null;
   let selectedShape = 'square';
-  let selectedFontSize = 140;
+  let selectedFontSize = 220; // 항상 특대형 고정
   let selectedColor = 'white';
   let selectedFont = 'paperlogy';
   let currentStep = 1;
@@ -1432,7 +1424,7 @@
 
       // 줄바꿈
       function wrapText(text, fs) {
-        ctx.font = `${fs}px '${fontName}', sans-serif`;
+        ctx.font = `bold ${fs}px '${fontName}', sans-serif`;
         const words = text.split(/(\s+|\|)/);
         const lines = [];
         let cur = '';
@@ -1455,7 +1447,7 @@
         lines = wrapText(title, fsize);
       }
 
-      ctx.font = `${fsize}px '${fontName}', sans-serif`;
+      ctx.font = `bold ${fsize}px '${fontName}', sans-serif`;
       ctx.fillStyle = selectedColor === 'white' ? '#ffffff'
                     : selectedColor === 'yellow' ? '#facc15'
                     : selectedColor;
@@ -1541,9 +1533,7 @@
     document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('selected'));
     document.querySelector('[data-font="paperlogy"]').classList.add('selected');
     selectedFont = 'paperlogy';
-    document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('selected'));
-    document.querySelector('[data-size="140"]').classList.add('selected');
-    selectedFontSize = 140;
+    selectedFontSize = 220;
     document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
     document.querySelector('[data-color="white"]').classList.add('selected');
     selectedColor = 'white';

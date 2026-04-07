@@ -84,8 +84,8 @@ def _create_thumbnail_image(
         generator.border_margin = 0
         generator.border_width = 0
 
-    if font_size:
-        generator.default_font_size = font_size
+    # 폰트 크기는 항상 특대형(220) 고정
+    generator.default_font_size = 220
 
     # 폰트 경로 설정
     font_rel = FONT_MAP.get(font_key, FONT_MAP["paperlogy"])
