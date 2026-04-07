@@ -1394,14 +1394,21 @@
     ctx.fillStyle = `rgba(0,0,0,${opacity})`;
     ctx.fillRect(0, 0, cw, ch);
 
-    // 3) 테두리
+    // 3) 테두리 — 백엔드와 동일: margin=30px, border=6px (1080 기준)
     const hasBorder = document.getElementById('border-toggle').checked;
+    const BORDER_MARGIN = Math.round(cw * (30 / 1080)); // 30/1080 비율
+    const BORDER_WIDTH  = Math.max(1, Math.round(cw * (6 / 1080)));
+    const INNER_PAD     = Math.round(cw * (56 / 1080)); // 내부 여백 56px → 텍스트 폭 83%
     if (hasBorder) {
-      const margin = Math.round(cw * 0.037);
-      const bw = Math.max(2, Math.round(cw * 0.006));
       ctx.strokeStyle = 'white';
-      ctx.lineWidth = bw;
-      ctx.strokeRect(margin, margin, cw - margin * 2, ch - margin * 2);
+      ctx.lineWidth = BORDER_WIDTH;
+      const half = BORDER_WIDTH / 2;
+      ctx.strokeRect(
+        BORDER_MARGIN + half,
+        BORDER_MARGIN + half,
+        cw - (BORDER_MARGIN + half) * 2,
+        ch - (BORDER_MARGIN + half) * 2
+      );
     }
 
     // 4) 텍스트
@@ -1410,12 +1417,14 @@
       try { await loadFont(selectedFont); } catch(e) {}
       const fontName = FONTS[selectedFont]?.name || 'Paperlogy';
 
-      // 폰트 크기 비율 조정 (1080 기준 → 캔버스 크기에 맞게)
+      // 백엔드와 동일한 여백 계산: border_margin + border_width + inner_pad
       const scale  = cw / 1080;
       let   fsize  = Math.round(selectedFontSize * scale);
-      const margin = hasBorder ? Math.round(cw * 0.037 + cw * 0.028) : Math.round(cw * 0.05);
-      const maxW   = cw - margin * 2;
-      const maxH   = ch - margin * 2;
+      const textMargin = hasBorder
+        ? BORDER_MARGIN + BORDER_WIDTH + INNER_PAD
+        : Math.round(cw * (15 / 1080));
+      const maxW   = cw - textMargin * 2;
+      const maxH   = ch - textMargin * 2;
 
       // 줄바꿈
       function wrapText(text, fs) {

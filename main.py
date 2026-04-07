@@ -417,7 +417,9 @@ class ThumbnailGenerator:
         draw = ImageDraw.Draw(image)
         width, height = image.size
         
-        margin = self.border_margin + self.border_width + 30
+        # 테두리 안쪽 내부 여백: 원본 기준 텍스트 폭 ~83% 맞춤 (56px)
+        inner_pad = 56
+        margin = self.border_margin + self.border_width + inner_pad
         text_area_width = width - 2 * margin
         text_area_height = height - 2 * margin
         

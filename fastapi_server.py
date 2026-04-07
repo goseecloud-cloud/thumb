@@ -76,7 +76,8 @@ def _create_thumbnail_image(
     image = generator.apply_dark_overlay(image, overlay_opacity)
 
     if border:
-        generator.border_margin = 40
+        # 원본 이미지 참고: margin 30px, border 6px
+        generator.border_margin = 30
         generator.border_width = 6
         image = generator.add_border(image, generator.border_margin, generator.border_width)
     else:
