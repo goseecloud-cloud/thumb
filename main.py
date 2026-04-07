@@ -31,7 +31,7 @@ class ThumbnailGenerator:
         self.border_margin = 60  # 테두리 여백 (px)
         self.border_width = 8    # 테두리 두께 (px)
         self.overlay_opacity = 0.43  # 어두운 필터 불투명도 (43%)
-        self.default_font_size = 218  # 기본 폰트 크기 (pt) - 특대형 고정
+        self.default_font_size = 225  # 기본 폰트 크기 (pt) - 특대형 고정
         self.line_spacing = 1.3  # 줄간격 비율 (1.0이 기본 줄간격, 값이 클수록 줄간격이 넓어짐)
         self.upload_url = "http://localhost:9999/upload"  # 로컬 Docker 파일서버 URL
         
