@@ -1166,7 +1166,7 @@
   // ── State ──
   let selectedFile = null;
   let selectedShape = 'square';
-  let selectedFontSize = 220; // 항상 특대형 고정
+  let selectedFontSize = 218; // 항상 특대형 고정
   let selectedColor = 'white';
   let selectedFont = 'paperlogy';
   let currentStep = 1;
@@ -1595,7 +1595,7 @@
     document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('selected'));
     document.querySelector('[data-font="paperlogy"]').classList.add('selected');
     selectedFont = 'paperlogy';
-    selectedFontSize = 220;
+    selectedFontSize = 218;
     document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
     document.querySelector('[data-color="white"]').classList.add('selected');
     selectedColor = 'white';
