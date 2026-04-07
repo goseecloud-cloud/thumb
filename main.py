@@ -222,37 +222,95 @@ class ThumbnailGenerator:
     def wrap_text(self, text, font, max_width):
         """
         텍스트를 지정된 너비에 맞춰 줄바꿈 처리
-        
-        Args:
-            text (str): 원본 텍스트
-            font (PIL.ImageFont): 폰트 객체
-            max_width (int): 최대 너비
-            
-        Returns:
-            list: 줄바꿈된 텍스트 라인 리스트
+        - \\n 수동 줄바꿈 우선 적용
+        - CJK(한글·한자·일본어)는 글자 단위로 분리 가능
+        - 영문/숫자는 단어(연속 문자열) 단위로 유지
+        - 공백은 단어 사이 구분자로만 사용 (줄 앞뒤 제거)
+        - 단일 토큰이 max_width 초과 시 글자 단위 강제 분리
         """
-        words = text.split(' ')
+
+        def is_cjk(ch):
+            cp = ord(ch)
+            return (
+                0xAC00 <= cp <= 0xD7A3 or  # 한글 완성형
+                0x1100 <= cp <= 0x11FF or  # 한글 자모
+                0x3130 <= cp <= 0x318F or  # 한글 호환 자모
+                0x4E00 <= cp <= 0x9FFF or  # 한자
+                0x3040 <= cp <= 0x30FF     # 히라가나·가타카나
+            )
+
+        def tokenize(paragraph):
+            """CJK는 1글자씩, 영문·숫자는 단어 단위로, 공백은 ' '로 토큰화"""
+            tokens = []
+            buf = ""
+            for ch in paragraph:
+                if ch == ' ':
+                    if buf:
+                        tokens.append(buf)
+                        buf = ""
+                    tokens.append(' ')
+                elif is_cjk(ch):
+                    if buf:
+                        tokens.append(buf)
+                        buf = ""
+                    tokens.append(ch)   # CJK 글자 하나씩
+                else:
+                    buf += ch           # 영문·숫자는 단어로 묶음
+            if buf:
+                tokens.append(buf)
+            return tokens
+
         lines = []
-        current_line = ""
-        
-        for word in words:
-            # 현재 줄에 단어를 추가했을 때의 너비 계산
-            test_line = current_line + (" " if current_line else "") + word
-            test_width = self.get_text_width(test_line, font)
-            
-            if test_width <= max_width:
-                current_line = test_line
-            else:
-                # 현재 줄이 비어있지 않으면 라인에 추가
+
+        for paragraph in text.split('\n'):
+            if not paragraph:
+                lines.append("")
+                continue
+
+            tokens = tokenize(paragraph)
+            current_line = ""
+            pending_space = False   # 토큰 앞에 공백이 필요한지 여부
+
+            for token in tokens:
+                if token == ' ':
+                    pending_space = True
+                    continue
+
+                # 현재 줄에 붙일 후보 문자열
                 if current_line:
-                    lines.append(current_line)
-                current_line = word
-        
-        # 마지막 줄 추가
-        if current_line:
-            lines.append(current_line)
-        
-        return lines
+                    test_line = current_line + (' ' if pending_space else '') + token
+                else:
+                    test_line = token
+
+                if self.get_text_width(test_line, font) <= max_width:
+                    current_line = test_line
+                    pending_space = False
+                else:
+                    # 현재 줄 확정
+                    if current_line:
+                        lines.append(current_line)
+
+                    # 토큰 자체가 max_width 초과 → 글자 단위 강제 분리
+                    if self.get_text_width(token, font) > max_width:
+                        char_line = ""
+                        for ch in token:
+                            test_ch = char_line + ch
+                            if self.get_text_width(test_ch, font) <= max_width:
+                                char_line = test_ch
+                            else:
+                                if char_line:
+                                    lines.append(char_line)
+                                char_line = ch
+                        current_line = char_line
+                    else:
+                        current_line = token
+
+                    pending_space = False
+
+            if current_line:
+                lines.append(current_line)
+
+        return lines if lines else [""]
 
     def get_text_width(self, text, font):
         """

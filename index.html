@@ -1411,7 +1411,9 @@
     // 4) 텍스트 — 이미지 정중앙 세로 정렬
     const title = document.getElementById('title-input').value.trim();
     if (title) {
+      // 폰트 로드 완료 후 measureText 정확도 보장
       try { await loadFont(selectedFont); } catch(e) {}
+      await document.fonts.ready;
       const fontName = FONTS[selectedFont]?.name || 'Paperlogy';
 
       const scale      = cw / 1080;
@@ -1422,21 +1424,81 @@
       const maxW = cw - textMargin * 2;
       const maxH = ch - textMargin * 2;
 
-      // 줄바꿈
+      // 줄바꿈 — \n 지원 + CJK 글자 단위 + 영문 단어 단위 혼합
+      function isCJK(ch) {
+        const cp = ch.codePointAt(0);
+        return (cp >= 0xAC00 && cp <= 0xD7A3) || // 한글 완성형
+               (cp >= 0x1100 && cp <= 0x11FF) || // 한글 자모
+               (cp >= 0x3130 && cp <= 0x318F) || // 한글 호환 자모
+               (cp >= 0x4E00 && cp <= 0x9FFF) || // 한자
+               (cp >= 0x3040 && cp <= 0x30FF);   // 히라가나·가타카나
+      }
+
+      // 텍스트를 토큰(CJK 1글자 / 영문 단어 / 공백) 배열로 분리
+      function tokenize(paragraph) {
+        const tokens = [];
+        let buf = '';
+        for (const ch of paragraph) {
+          if (ch === ' ') {
+            if (buf) { tokens.push(buf); buf = ''; }
+            tokens.push(' ');
+          } else if (isCJK(ch)) {
+            if (buf) { tokens.push(buf); buf = ''; }
+            tokens.push(ch);          // CJK는 글자 하나씩
+          } else {
+            buf += ch;                // 영문/숫자는 단어로 묶음
+          }
+        }
+        if (buf) tokens.push(buf);
+        return tokens;
+      }
+
       function wrapText(text, fs) {
         ctx.font = `bold ${fs}px '${fontName}', sans-serif`;
-        const words = text.split(/(\s+|\|)/);
         const lines = [];
-        let cur = '';
-        for (const w of words) {
-          const test = cur ? cur + w : w;
-          if (ctx.measureText(test).width > maxW && cur) {
-            lines.push(cur.trim());
-            cur = w;
-          } else { cur = test; }
+
+        for (const paragraph of text.split('\n')) {
+          if (!paragraph) { lines.push(''); continue; }
+
+          const tokens = tokenize(paragraph);
+          let cur = '';
+
+          for (const tok of tokens) {
+            if (tok === ' ') {
+              // 공백: 현재 줄이 있으면 공백 추가(줄 끝 공백은 출력 시 무시됨)
+              if (cur) cur += ' ';
+              continue;
+            }
+
+            const test = cur ? cur + tok : tok;
+
+            if (ctx.measureText(test).width <= maxW) {
+              cur = test;
+            } else {
+              // 현재 줄 확정 (끝 공백 제거)
+              if (cur.trimEnd()) lines.push(cur.trimEnd());
+
+              // 토큰 자체가 maxW 초과하면 글자 단위 강제 분리
+              if (ctx.measureText(tok).width > maxW) {
+                let charLine = '';
+                for (const ch of tok) {
+                  const testCh = charLine + ch;
+                  if (ctx.measureText(testCh).width <= maxW) {
+                    charLine = testCh;
+                  } else {
+                    if (charLine) lines.push(charLine);
+                    charLine = ch;
+                  }
+                }
+                cur = charLine;
+              } else {
+                cur = tok;
+              }
+            }
+          }
+          if (cur.trimEnd()) lines.push(cur.trimEnd());
         }
-        if (cur.trim()) lines.push(cur.trim());
-        return lines;
+        return lines.length ? lines : [''];
       }
 
       // 폰트 크기 자동 조정
