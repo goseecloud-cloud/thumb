@@ -851,6 +851,60 @@
       header { padding: 36px 16px 28px; }
       .card-body { padding: 20px; }
     }
+
+    /* ── 쿠팡 팝업 모달 ── */
+    .coupang-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .coupang-overlay.show { display: flex; }
+    .coupang-modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px 24px;
+      max-width: 380px;
+      width: 90%;
+      text-align: center;
+      animation: fadeIn .2s ease;
+    }
+    .coupang-modal .modal-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+    }
+    .coupang-modal h3 {
+      font-size: 17px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+    .coupang-modal p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .coupang-modal p span {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .coupang-modal .modal-notice {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 12px;
+      opacity: .7;
+    }
+    .modal-btns {
+      display: flex;
+      gap: 10px;
+    }
+    .modal-btns .btn { flex: 1; }
   </style>
 </head>
 <body>
@@ -1147,7 +1201,7 @@
           </div>
         </div>
 
-        <a id="download-link" href="#" download class="btn btn-success btn-full">
+        <a id="download-link" href="#" class="btn btn-success btn-full" onclick="handleDownloadClick(event)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           다운로드
         </a>
@@ -1568,9 +1622,12 @@
       const dlLink = document.getElementById('download-link');
       dlLink.href = data.thumbnail_url;
       dlLink.download = data.filename;
+      dlLink.setAttribute('data-filename', data.filename);
 
       goToStep(3);
       showToast('썸네일이 생성되었습니다!', 'success');
+      // 생성 완료 즉시 쿠팡 팝업 표시
+      showCoupangModal(data.thumbnail_url, data.filename);
     } catch (err) {
       document.getElementById('error-msg').textContent = err.message;
       errBox.classList.add('show');
@@ -1605,6 +1662,39 @@
     goToStep(1);
   }
 
+  // ── 쿠팡 파트너스 팝업 ──
+  let pendingDownloadUrl = '';
+  let pendingDownloadName = '';
+
+  function handleDownloadClick(e) {
+    e.preventDefault();
+    const dlLink = document.getElementById('download-link');
+    showCoupangModal(dlLink.href, dlLink.getAttribute('data-filename') || 'thumbnail.png');
+  }
+
+  function showCoupangModal(url, filename) {
+    pendingDownloadUrl = url;
+    pendingDownloadName = filename;
+    document.getElementById('coupang-overlay').classList.add('show');
+  }
+
+  function closeCoupangModal() {
+    document.getElementById('coupang-overlay').classList.remove('show');
+  }
+
+  function confirmCoupang() {
+    closeCoupangModal();
+    // 새 창으로 쿠팡 열기
+    window.open('https://link.coupang.com/a/ejPGj5', '_blank');
+    // 원창에서 이미지 자동 다운로드
+    const a = document.createElement('a');
+    a.href = pendingDownloadUrl;
+    a.download = pendingDownloadName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
   // ── Toast ──
   function showToast(msg, type = 'success') {
     const t = document.getElementById('toast');
@@ -1617,5 +1707,20 @@
     setTimeout(() => t.classList.remove('show'), 3500);
   }
 </script>
+<!-- 쿠팡 파트너스 팝업 모달 -->
+<div class="coupang-overlay" id="coupang-overlay">
+  <div class="coupang-modal">
+    <div class="modal-icon">🛍️</div>
+    <h3>잠깐! 썸네일 다운로드 전에</h3>
+    <p>이 서비스는 <span>쿠팡 파트너스</span> 활동을 통해
+    운영됩니다.<br>확인 버튼을 누르면 쿠팡 페이지가
+    새 창으로 열리고, 썸네일이 자동으로 다운로드됩니다.</p>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeCoupangModal()">취소</button>
+      <button class="btn btn-primary" onclick="confirmCoupang()">확인 &amp; 다운로드</button>
+    </div>
+    <p class="modal-notice">※ 이 링크는 쿠팡 파트너스 링크로, 수익의 일부가 서비스 운영에 사용됩니다.</p>
+  </div>
+</div>
 </body>
 </html>
