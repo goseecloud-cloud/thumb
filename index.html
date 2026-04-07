@@ -228,6 +228,11 @@
       align-items: center;
       justify-content: center;
     }
+    /* 이미지 있을 때는 이미지 비율에 맞게 높이 자동 조정 */
+    .drop-zone.has-image {
+      min-height: unset;
+      height: auto;
+    }
     /* 빈 상태 콘텐츠 */
     .drop-zone-empty {
       padding: 64px 32px;
@@ -257,7 +262,6 @@
       border-style: solid;
       border-color: var(--accent);
       padding: 0;
-      min-height: 320px;
       cursor: default;
     }
     .drop-zone.has-image::before { display: none; }
@@ -320,13 +324,15 @@
       position: absolute;
       inset: 0;
       display: none;
+      background: #111;
     }
-    .drop-preview.visible { display: block; }
+    .drop-preview.visible { display: flex; flex-direction: column; }
     .drop-preview-img {
       width: 100%;
-      height: 100%;
-      object-fit: cover;
+      flex: 1;
+      object-fit: contain;
       display: block;
+      min-height: 0;
     }
     /* 이미지 위 오버레이 (파일명 + 삭제 버튼) */
     .drop-preview-overlay {
@@ -1084,7 +1090,18 @@
     selectedFile = file;
     const reader = new FileReader();
     reader.onload = e => {
-      document.getElementById('preview-img').src = e.target.result;
+      const img = document.getElementById('preview-img');
+      img.src = e.target.result;
+
+      // 이미지 로드 완료 후 드롭존 높이를 비율에 맞게 설정
+      img.onload = () => {
+        const dz = document.getElementById('drop-zone');
+        const dzWidth = dz.clientWidth;
+        const ratio = img.naturalHeight / img.naturalWidth;
+        const targetH = Math.round(dzWidth * ratio);
+        // 최소 240px, 최대 560px 로 클램핑
+        dz.style.height = Math.min(Math.max(targetH, 240), 560) + 'px';
+      };
     };
     reader.readAsDataURL(file);
     document.getElementById('preview-name').textContent = file.name;
@@ -1107,6 +1124,7 @@
     // 드롭존 → 빈 상태로 복원
     const dz = document.getElementById('drop-zone');
     dz.classList.remove('has-image');
+    dz.style.height = '';
     document.getElementById('drop-empty').style.display = '';
     document.getElementById('drop-preview').classList.remove('visible');
     document.getElementById('preview-img').src = '';
