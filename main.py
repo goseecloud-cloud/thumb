@@ -402,6 +402,56 @@ class ThumbnailGenerator:
         print(f"대형 텍스트 추가 완료: '{title_text}' ({len(lines)}줄, 폰트 크기: {font_size}pt)")
         return image
 
+    def add_text_overlay_custom(self, image, title_text, text_color='white'):
+        """
+        이미지 중앙에 제목 텍스트 추가 (커스텀 색상 지원)
+        
+        Args:
+            image (PIL.Image): 원본 이미지
+            title_text (str): 추가할 제목 텍스트
+            text_color (str): 텍스트 색상 (기본: 'white')
+            
+        Returns:
+            PIL.Image: 텍스트가 추가된 이미지
+        """
+        draw = ImageDraw.Draw(image)
+        width, height = image.size
+        
+        margin = self.border_margin + self.border_width + 30
+        text_area_width = width - 2 * margin
+        text_area_height = height - 2 * margin
+        
+        font_size = self.default_font_size
+        min_font_size = 40
+        line_spacing = self.line_spacing
+        
+        while font_size >= min_font_size:
+            font = self.load_font(font_size)
+            lines = self.wrap_text(title_text, font, text_area_width)
+            total_width, total_height = self.calculate_multiline_text_size(lines, font, line_spacing)
+            
+            if total_width <= text_area_width and total_height <= text_area_height:
+                break
+            font_size -= 10
+        
+        font = self.load_font(font_size)
+        lines = self.wrap_text(title_text, font, text_area_width)
+        total_width, total_height = self.calculate_multiline_text_size(lines, font, line_spacing)
+        
+        start_y = (height - total_height) // 2
+        line_height = self.get_text_height(lines[0] if lines else "A", font)
+        current_y = start_y
+        
+        for i, line in enumerate(lines):
+            line_width = self.get_text_width(line, font)
+            line_x = (width - line_width) // 2
+            draw.text((line_x, current_y), line, fill=text_color, font=font)
+            if i < len(lines) - 1:
+                current_y += int(line_height * line_spacing)
+        
+        print(f"커스텀 텍스트 추가 완료: '{title_text}' ({len(lines)}줄, 폰트: {font_size}pt, 색상: {text_color})")
+        return image
+
     def generate_filename(self):
         """
         중복되지 않는 랜덤 파일명 생성
