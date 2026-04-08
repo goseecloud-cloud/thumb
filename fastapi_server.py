@@ -168,6 +168,20 @@ async def serve_font(font_key: str):
     return FileResponse(str(font_path), media_type="font/ttf")
 
 
+@app.get("/download/{filename}")
+async def download_file(filename: str):
+    """강제 다운로드 엔드포인트 - Content-Disposition 헤더 추가"""
+    file_path = OUTPUT_DIR / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="파일을 찾을 수 없습니다.")
+    return FileResponse(
+        str(file_path),
+        media_type="image/png",
+        filename=filename,
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
 @app.post("/generate-file", response_model=ThumbnailResponse)
 async def generate_thumbnail_by_file(
     request: Request,
