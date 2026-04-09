@@ -226,6 +226,12 @@ async def generate_thumbnail_by_file(
 
     try:
         file_bytes = await file.read()
+        
+        # 파일 크기 체크 (최대 10MB)
+        max_size = 10 * 1024 * 1024  # 10MB
+        if len(file_bytes) > max_size:
+            raise HTTPException(status_code=400, detail="파일 크기는 10MB 이하여야 합니다.")
+        
         source_image = Image.open(io.BytesIO(file_bytes)).convert("RGB")
 
         generator = ThumbnailGenerator()
@@ -249,9 +255,19 @@ async def generate_thumbnail_by_file(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"파일 썸네일 생성 중 오류가 발생했습니다: {e}")
+        import traceback
+        error_detail = f"파일 썸네일 생성 중 오류: {type(e).__name__}: {str(e)}"
+        print(f"ERROR: {error_detail}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=error_detail)
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8866)
+    uvicorn.run(
+        app, 
+        host="0.0.0.0", 
+        port=8866,
+        timeout_keep_alive=120,  # Keep-alive 타임아웃 2분
+        limit_max_requests=10000  # 최대 요청 수
+    )
