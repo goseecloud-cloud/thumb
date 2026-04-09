@@ -1715,11 +1715,13 @@
     console.log('directDownload 호출됨');
     e.preventDefault();
     const dlLink = document.getElementById('download-link');
-    const href = dlLink.href;
-    console.log('dlLink.href:', href);
+    
+    // getAttribute로 원본 href 가져오기 (절대 URL 변환 방지)
+    let href = dlLink.getAttribute('href');
+    console.log('원본 href:', href);
     
     // href가 설정되지 않았거나 #인 경우 처리
-    if (!href || href.endsWith('#')) {
+    if (!href || href === '#') {
       console.error('다운로드 URL이 없음');
       showToast('다운로드할 파일이 없습니다.', 'error');
       return;
@@ -1729,14 +1731,27 @@
     const downloadUrl = href.replace('/output/', '/download/');
     console.log('다운로드 URL:', downloadUrl);
     
-    // a 태그로 다운로드 트리거
-    const a = document.createElement('a');
-    a.href = downloadUrl;
-    a.download = dlLink.getAttribute('data-filename') || 'thumbnail.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    console.log('다운로드 트리거 완료');
+    // fetch로 Blob 다운로드 (CORS/브라우저 차단 방지)
+    fetch(downloadUrl)
+      .then(res => {
+        if (!res.ok) throw new Error('다운로드 실패: ' + res.status);
+        return res.blob();
+      })
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = dlLink.getAttribute('data-filename') || 'thumbnail.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        console.log('다운로드 완료');
+      })
+      .catch(err => {
+        console.error('다운로드 에러:', err);
+        showToast('다운로드 중 오류가 발생했습니다.', 'error');
+      });
   }
 
   function handleDownloadClick(e) {
