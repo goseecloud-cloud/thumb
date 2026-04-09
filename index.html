@@ -1712,46 +1712,41 @@
   let pendingDownloadName = '';
 
   function directDownload(e) {
-    console.log('directDownload 호출됨');
+    console.log('✅ directDownload 호출됨');
     e.preventDefault();
+    e.stopPropagation();
+    
     const dlLink = document.getElementById('download-link');
     
     // getAttribute로 원본 href 가져오기 (절대 URL 변환 방지)
     let href = dlLink.getAttribute('href');
-    console.log('원본 href:', href);
+    console.log('📎 원본 href:', href);
     
     // href가 설정되지 않았거나 #인 경우 처리
     if (!href || href === '#') {
-      console.error('다운로드 URL이 없음');
+      console.error('❌ 다운로드 URL이 없음');
       showToast('다운로드할 파일이 없습니다.', 'error');
-      return;
+      return false;
     }
     
     // /output/를 /download/로 변경
     const downloadUrl = href.replace('/output/', '/download/');
-    console.log('다운로드 URL:', downloadUrl);
+    console.log('🔗 다운로드 URL:', downloadUrl);
     
-    // fetch로 Blob 다운로드 (CORS/브라우저 차단 방지)
-    fetch(downloadUrl)
-      .then(res => {
-        if (!res.ok) throw new Error('다운로드 실패: ' + res.status);
-        return res.blob();
-      })
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = dlLink.getAttribute('data-filename') || 'thumbnail.png';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        console.log('다운로드 완료');
-      })
-      .catch(err => {
-        console.error('다운로드 에러:', err);
-        showToast('다운로드 중 오류가 발생했습니다.', 'error');
-      });
+    // iframe 방식으로 다운로드 (가장 안정적)
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = downloadUrl;
+    document.body.appendChild(iframe);
+    
+    // 2초 후 iframe 제거
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+      console.log('✅ 다운로드 완료 (iframe 제거)');
+    }, 2000);
+    
+    showToast('다운로드가 시작되었습니다.', 'success');
+    return false;
   }
 
   function handleDownloadClick(e) {
