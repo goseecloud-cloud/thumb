@@ -3,7 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>썸네일 생성기</title>
+  <title>무료 썸네일 생성기 - 유튜브 블로그 SNS 썸네일 제작 툴</title>
+  <meta name="description" content="이미지와 텍스트만 있으면 30초 만에 전문가 수준의 썸네일을 제작할 수 있습니다. 유튜브, 블로그, 인스타그램 썸네일 제작에 최적화된 무료 도구입니다." />
+  <meta name="keywords" content="썸네일 생성기,썸네일 만들기,유튜브 썸네일,블로그 썸네일,SNS 썸네일,무료 썸네일,온라인 썸네일 제작,이미지 편집,텍스트 오버레이" />
+  <meta name="author" content="썸네일 생성기" />
+  <meta name="robots" content="index, follow" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="무료 썸네일 생성기 - 30초 만에 전문가 수준 썸네일 제작" />
+  <meta property="og:description" content="이미지 업로드, 텍스트 입력, 생성 클릭! 유튜브, 블로그, SNS에 최적화된 썸네일을 즉시 만들어보세요." />
+  <meta property="og:image" content="/output/thumbnail-preview.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="무료 썸네일 생성기" />
+  <meta name="twitter:description" content="30초 만에 전문가 수준 썸네일 제작" />
+  <link rel="canonical" href="https://8866-icbxtt9amn191ekvzh3l8-ea026bf9.sandbox.novita.ai/" />
+  
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1217533439838380"
+     crossorigin="anonymous"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap');
 
@@ -27,6 +43,19 @@
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* 우클릭 방지 및 드래그 방지 */
+    img, canvas, #result-img, #preview-img, .preview-canvas {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      -khtml-user-drag: none;
+      -moz-user-drag: none;
+      -o-user-drag: none;
+      pointer-events: none;
+    }
 
     body {
       font-family: 'Noto Sans KR', sans-serif;
@@ -1734,6 +1763,28 @@
     setTimeout(() => t.classList.add('show'), 10);
     setTimeout(() => t.classList.remove('show'), 3500);
   }
+
+  // ── 우클릭 방지 ──
+  document.addEventListener('contextmenu', function(e) {
+    const target = e.target;
+    if (target.tagName === 'IMG' || 
+        target.tagName === 'CANVAS' || 
+        target.id === 'result-img' || 
+        target.id === 'preview-img' ||
+        target.id === 'preview-canvas') {
+      e.preventDefault();
+      return false;
+    }
+  });
+
+  // 드래그 방지
+  document.addEventListener('dragstart', function(e) {
+    const target = e.target;
+    if (target.tagName === 'IMG' || target.tagName === 'CANVAS') {
+      e.preventDefault();
+      return false;
+    }
+  });
 </script>
 <!-- 쿠팡 파트너스 팝업 모달 -->
 <div class="coupang-overlay" id="coupang-overlay">
