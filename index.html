@@ -1704,6 +1704,8 @@
 
   function closeCoupangModal() {
     document.getElementById('coupang-overlay').classList.remove('show');
+    // 1단계(업로드 화면)로 돌아가기
+    goToStep(1);
   }
 
   async function confirmCoupang() {
