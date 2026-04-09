@@ -1463,7 +1463,8 @@
     }
 
     // 4) 텍스트 — 이미지 정중앙 세로 정렬
-    const title = document.getElementById('title-input').value.trim();
+    const rawTitle = document.getElementById('title-input').value;
+    const title = normalizeText(rawTitle);
     if (title) {
       // 폰트 로드 완료 후 measureText 정확도 보장
       try { await loadFont(selectedFont); } catch(e) {}
@@ -1582,8 +1583,19 @@
   }
 
   // ── Generate ──
+  function normalizeText(text) {
+    // 특수 공백/제어 문자 정규화
+    return text
+      .replace(/[\u00A0\u1680\u2000-\u200B\u202F\u205F\u3000\uFEFF]/g, ' ')  // 특수 공백 → 일반 공백
+      .replace(/\r\n/g, '\n')  // Windows 줄바꿈 정규화
+      .replace(/\r/g, '\n')    // Mac 줄바꿈 정규화
+      .replace(/[\x00-\x1F\x7F]/g, (m) => m === '\n' ? '\n' : '')  // 제어문자 제거 (줄바꿈 제외)
+      .trim();
+  }
+
   async function generate() {
-    const title = document.getElementById('title-input').value.trim();
+    const rawTitle = document.getElementById('title-input').value;
+    const title = normalizeText(rawTitle);
     if (!title) { showToast('썸네일 문구를 입력해주세요.', 'error'); return; }
     if (!selectedFile) { showToast('이미지를 먼저 업로드하세요.', 'error'); return; }
 
