@@ -1201,7 +1201,7 @@
           </div>
         </div>
 
-        <a id="download-link" href="#" class="btn btn-success btn-full" onclick="handleDownloadClick(event)">
+        <a id="download-link" href="#" class="btn btn-success btn-full" onclick="directDownload(event)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           다운로드
         </a>
@@ -1682,6 +1682,13 @@
   // ── 쿠팡 파트너스 팝업 ──
   let pendingDownloadUrl = '';
   let pendingDownloadName = '';
+
+  function directDownload(e) {
+    e.preventDefault();
+    const dlLink = document.getElementById('download-link');
+    const downloadUrl = dlLink.href.replace('/output/', '/download/');
+    window.location.href = downloadUrl;
+  }
 
   function handleDownloadClick(e) {
     e.preventDefault();
