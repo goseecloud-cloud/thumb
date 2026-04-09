@@ -120,8 +120,8 @@ def _save_local_image(image: Image.Image, filename: str) -> str:
 
 
 def _build_local_url(request: Request, filename: str) -> str:
-    base_url = str(request.base_url).rstrip("/")
-    return f"{base_url}/output/{quote(filename)}"
+    # 상대 경로만 반환 (HTTPS Mixed Content 에러 방지)
+    return f"/output/{quote(filename)}"
 
 
 def _finalize_response(
