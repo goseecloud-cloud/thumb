@@ -501,18 +501,21 @@ class ThumbnailGenerator:
         font = self.load_font(font_size)
         lines = self.wrap_text(title_text, font, text_area_width)
         total_width, total_height = self.calculate_multiline_text_size(lines, font, line_spacing)
-        line_height = self.get_text_height(lines[0] if lines else "A", font)
+        
+        # 줄 높이를 폰트 크기 기준으로 계산 (캔버스와 동일)
+        line_height = font_size
 
         # 전체 텍스트 블록을 이미지 정중앙에 배치 (상하 중앙)
-        start_y = (height - total_height) // 2
-        current_y = start_y
+        # 총 높이 = (줄수-1) * (line_height * line_spacing) + line_height
+        actual_total_height = (len(lines) - 1) * (line_height * line_spacing) + line_height
+        start_y = (height - actual_total_height) // 2
 
         for i, line in enumerate(lines):
             line_width = self.get_text_width(line, font)
             line_x = (width - line_width) // 2
+            # 각 줄의 Y 좌표 = start_y + (줄번호 * line_height * line_spacing)
+            current_y = start_y + int(i * line_height * line_spacing)
             draw.text((line_x, current_y), line, fill=text_color, font=font)
-            if i < len(lines) - 1:
-                current_y += int(line_height * line_spacing)
 
         print(f"커스텀 텍스트 추가 완료: '{title_text}' ({len(lines)}줄, 폰트: {font_size}pt, 색상: {text_color})")
         return image
