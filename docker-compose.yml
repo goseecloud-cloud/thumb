@@ -1,32 +1,32 @@
 version: '3.8'
 
 services:
-  thumbnail-app:
+
+  # ── FastAPI 앱 ──────────────────────────────────
+  app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: thumbnail-app
     restart: unless-stopped
-    ports:
-      - "8866:8866"
+    expose:
+      - "8866"          # nginx에서만 접근 (외부 직접 노출 안 함)
     volumes:
-      # 생성된 썸네일 영구 보관
-      - thumbnail_output:/app/output
+      - thumbnail_output:/app/output   # 생성 파일 영구 보관
     environment:
-      - PYTHONUNBUFFERED=1
       - TZ=Asia/Seoul
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8866/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
+      start_period: 20s
     networks:
-      - thumbnail-net
+      - internal
 
-  # ── Nginx 리버스 프록시 (HTTPS + thumb.goseecloud.com) ──
+  # ── Nginx 리버스 프록시 (HTTPS) ─────────────────
   nginx:
-    image: nginx:alpine
+    image: nginx:1.27-alpine
     container_name: thumbnail-nginx
     restart: unless-stopped
     ports:
@@ -34,29 +34,28 @@ services:
       - "443:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
       - certbot_webroot:/var/www/certbot:ro
       - certbot_certs:/etc/letsencrypt:ro
     depends_on:
-      - thumbnail-app
+      app:
+        condition: service_healthy
     networks:
-      - thumbnail-net
+      - internal
 
-  # ── Let's Encrypt 인증서 자동 갱신 ──
+  # ── Certbot (Let's Encrypt 자동 갱신) ───────────
   certbot:
     image: certbot/certbot:latest
     container_name: thumbnail-certbot
+    restart: unless-stopped
     volumes:
       - certbot_webroot:/var/www/certbot
       - certbot_certs:/etc/letsencrypt
     entrypoint: >
-      /bin/sh -c "
-        trap exit TERM;
+      /bin/sh -c "trap exit TERM;
         while :; do
           certbot renew --webroot -w /var/www/certbot --quiet;
           sleep 12h & wait $${!};
-        done
-      "
+        done"
 
 volumes:
   thumbnail_output:
@@ -64,5 +63,5 @@ volumes:
   certbot_certs:
 
 networks:
-  thumbnail-net:
+  internal:
     driver: bridge

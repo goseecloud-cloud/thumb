@@ -1,7 +1,7 @@
-fastapi==0.115.0
-uvicorn[standard]==0.32.0
-Pillow==11.0.0
-requests==2.32.3
-python-multipart==0.0.16
-pydantic==2.10.3
-fonttools==4.55.3
+fastapi==0.135.3
+uvicorn[standard]==0.44.0
+Pillow==11.2.1
+requests==2.32.4
+python-multipart==0.0.24
+pydantic==2.11.7
+fonttools==4.58.4
