@@ -1733,8 +1733,6 @@
 
   function closeCoupangModal() {
     document.getElementById('coupang-overlay').classList.remove('show');
-    // 1단계(업로드 화면)로 돌아가기
-    goToStep(1);
   }
 
   async function confirmCoupang() {
@@ -1742,6 +1740,7 @@
     // 새 창으로 쿠팡 열기
     window.open('https://link.coupang.com/a/ejPGj5', '_blank');
     
+    // 뒤 배경은 3단계(완성 화면) 유지
     // 강제 다운로드 (서버 /download 엔드포인트 사용)
     const downloadUrl = pendingDownloadUrl.replace('/output/', '/download/');
     const a = document.createElement('a');
