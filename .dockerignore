@@ -1,46 +1,33 @@
-# Python
+# Git
+.git
+.gitignore
+
+# 개발 환경
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
+*.pyc
+*.pyo
+*.pyd
 .Python
-*.egg-info/
-dist/
-build/
-venv/
-.venv/
-env/
-.env
+
+# 생성된 썸네일 (볼륨으로 관리)
+output/
+
+# 테스트 파일
+test_*.py
+*.test.py
+
+# 개발용 설정
+.env.local
+*.log
+
+# 문서
+README.md
+*.md
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
 
-# OS
-.DS_Store
-Thumbs.db
-*.log
-
-# Output directory (로컬 백업 파일들)
-output/
-
-# Development files
-*.md
-README*
-
-# Git
-.git/
-.gitignore
-
-# Testing files
-test_*
-*_test.py
-tests/
-
-# Temporary files
-*.tmp
-*.temp
-temp/
+# 백업 파일
+*.bak
+fonts/*.bak

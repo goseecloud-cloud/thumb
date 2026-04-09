@@ -1,30 +1,68 @@
 version: '3.8'
 
 services:
-  thumbnail-generator:
-    build: 
+  thumbnail-app:
+    build:
       context: .
       dockerfile: Dockerfile
-    container_name: thumbnail-generator-api
+    container_name: thumbnail-app
+    restart: unless-stopped
     ports:
-      - "8866:8866"  # 호스트 8866 포트를 컨테이너 8866 포트로 매핑
+      - "8866:8866"
     volumes:
-      - ./output:/app/output  # 생성된 이미지 저장용
-      - ./fonts:/app/fonts    # 폰트 파일용
+      # 생성된 썸네일 영구 보관
+      - thumbnail_output:/app/output
     environment:
-      - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
       - TZ=Asia/Seoul
-    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8866/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 15s
     networks:
-      - thumbnail-network
+      - thumbnail-net
+
+  # ── Nginx 리버스 프록시 (HTTPS + thumb.goseecloud.com) ──
+  nginx:
+    image: nginx:alpine
+    container_name: thumbnail-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - certbot_webroot:/var/www/certbot:ro
+      - certbot_certs:/etc/letsencrypt:ro
+    depends_on:
+      - thumbnail-app
+    networks:
+      - thumbnail-net
+
+  # ── Let's Encrypt 인증서 자동 갱신 ──
+  certbot:
+    image: certbot/certbot:latest
+    container_name: thumbnail-certbot
+    volumes:
+      - certbot_webroot:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
+    entrypoint: >
+      /bin/sh -c "
+        trap exit TERM;
+        while :; do
+          certbot renew --webroot -w /var/www/certbot --quiet;
+          sleep 12h & wait $${!};
+        done
+      "
+
+volumes:
+  thumbnail_output:
+  certbot_webroot:
+  certbot_certs:
 
 networks:
-  thumbnail-network:
+  thumbnail-net:
     driver: bridge
