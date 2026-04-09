@@ -1715,8 +1715,24 @@
   function directDownload(e) {
     e.preventDefault();
     const dlLink = document.getElementById('download-link');
-    const downloadUrl = dlLink.href.replace('/output/', '/download/');
-    window.location.href = downloadUrl;
+    const href = dlLink.href;
+    
+    // href가 설정되지 않았거나 #인 경우 처리
+    if (!href || href.endsWith('#')) {
+      showToast('다운로드할 파일이 없습니다.', 'error');
+      return;
+    }
+    
+    // /output/를 /download/로 변경
+    const downloadUrl = href.replace('/output/', '/download/');
+    
+    // a 태그로 다운로드 트리거
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = dlLink.getAttribute('data-filename') || 'thumbnail.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   function handleDownloadClick(e) {
