@@ -1,6 +1,7 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════
 #  thumb.goseecloud.com 콘타보 서버 배포 스크립트
+#  (기존 nginx 사용 버전)
 #  사용법: sudo bash deploy.sh
 # ═══════════════════════════════════════════════════
 set -e
@@ -12,7 +13,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "  썸네일 생성기 배포  |  $DOMAIN"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# ── STEP 1: Docker 설치 ──────────────────────────
+# ── STEP 1: Docker 설치 확인 ─────────────────────
 echo ""
 echo "[1/5] Docker 확인..."
 if ! command -v docker &>/dev/null; then
@@ -22,38 +23,50 @@ if ! command -v docker &>/dev/null; then
 fi
 echo "  ✅ Docker $(docker --version | cut -d' ' -f3 | tr -d ',')"
 
-# ── STEP 2: HTTPS 설정 임시 비활성화 ─────────────
+# ── STEP 2: nginx 설정 복사 ──────────────────────
 echo ""
-echo "[2/5] HTTP 모드로 준비..."
-# SSL 인증서 없이 시작하기 위해 thumbnail.conf 잠시 비활성화
-[ -f nginx/conf.d/thumbnail.conf ] && \
-    mv nginx/conf.d/thumbnail.conf nginx/conf.d/thumbnail.conf.bak
+echo "[2/5] nginx 설정 적용..."
+cp nginx/thumb.goseecloud.com.conf /etc/nginx/sites-available/thumb.goseecloud.com
 
-# ── STEP 3: 앱 + Nginx 시작 ─────────────────────
-echo ""
-echo "[3/5] 컨테이너 시작..."
-docker compose up -d --build app nginx
-echo "  ✅ 앱 시작 완료"
-sleep 5
+# 심볼릭 링크 (없으면 생성)
+if [ ! -f /etc/nginx/sites-enabled/thumb.goseecloud.com ]; then
+    ln -s /etc/nginx/sites-available/thumb.goseecloud.com \
+          /etc/nginx/sites-enabled/thumb.goseecloud.com
+fi
 
-# ── STEP 4: SSL 인증서 발급 ─────────────────────
+# SSL 설정 블록 임시 제거 (인증서 없으면 nginx -t 실패하므로)
+sed '/listen 443/,/^}/d' /etc/nginx/sites-available/thumb.goseecloud.com \
+    > /tmp/thumb_http_only.conf
+cp /tmp/thumb_http_only.conf /etc/nginx/sites-available/thumb.goseecloud.com
+
+nginx -t && systemctl reload nginx
+echo "  ✅ nginx 설정 적용 완료 (HTTP)"
+
+# ── STEP 3: SSL 인증서 발급 ──────────────────────
 echo ""
-echo "[4/5] Let's Encrypt SSL 발급..."
-docker compose run --rm certbot certonly \
-    --webroot -w /var/www/certbot \
+echo "[3/5] Let's Encrypt SSL 발급..."
+if ! command -v certbot &>/dev/null; then
+    apt-get install -y certbot python3-certbot-nginx
+fi
+
+certbot certonly --nginx \
+    -d "$DOMAIN" \
     --email "$EMAIL" \
-    --agree-tos --no-eff-email \
-    -d "$DOMAIN"
-echo "  ✅ 인증서 발급 완료"
+    --agree-tos --no-eff-email --non-interactive
+echo "  ✅ SSL 인증서 발급 완료"
 
-# ── STEP 5: HTTPS 전환 + 재시작 ─────────────────
+# ── STEP 4: HTTPS nginx 설정으로 교체 ────────────
 echo ""
-echo "[5/5] HTTPS 전환..."
-rm -f nginx/conf.d/thumbnail-init.conf
-[ -f nginx/conf.d/thumbnail.conf.bak ] && \
-    mv nginx/conf.d/thumbnail.conf.bak nginx/conf.d/thumbnail.conf
-docker compose up -d
-echo "  ✅ HTTPS 전환 완료"
+echo "[4/5] HTTPS 설정 적용..."
+cp nginx/thumb.goseecloud.com.conf /etc/nginx/sites-available/thumb.goseecloud.com
+nginx -t && systemctl reload nginx
+echo "  ✅ HTTPS 설정 적용 완료"
+
+# ── STEP 5: Docker 앱 시작 ───────────────────────
+echo ""
+echo "[5/5] Docker 앱 시작..."
+docker compose up -d --build
+echo "  ✅ 앱 시작 완료"
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

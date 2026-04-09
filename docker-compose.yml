@@ -2,17 +2,17 @@ version: '3.8'
 
 services:
 
-  # ── FastAPI 앱 ──────────────────────────────────
+  # ── FastAPI 앱 (기존 nginx가 8866 포트로 프록시) ──
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: thumbnail-app
     restart: unless-stopped
-    expose:
-      - "8866"          # nginx에서만 접근 (외부 직접 노출 안 함)
+    ports:
+      - "8866:8866"    # 호스트 nginx → 컨테이너 직접 접근
     volumes:
-      - thumbnail_output:/app/output   # 생성 파일 영구 보관
+      - thumbnail_output:/app/output
     environment:
       - TZ=Asia/Seoul
     healthcheck:
@@ -21,47 +21,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 20s
-    networks:
-      - internal
-
-  # ── Nginx 리버스 프록시 (HTTPS) ─────────────────
-  nginx:
-    image: nginx:1.27-alpine
-    container_name: thumbnail-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - certbot_webroot:/var/www/certbot:ro
-      - certbot_certs:/etc/letsencrypt:ro
-    depends_on:
-      app:
-        condition: service_healthy
-    networks:
-      - internal
-
-  # ── Certbot (Let's Encrypt 자동 갱신) ───────────
-  certbot:
-    image: certbot/certbot:latest
-    container_name: thumbnail-certbot
-    restart: unless-stopped
-    volumes:
-      - certbot_webroot:/var/www/certbot
-      - certbot_certs:/etc/letsencrypt
-    entrypoint: >
-      /bin/sh -c "trap exit TERM;
-        while :; do
-          certbot renew --webroot -w /var/www/certbot --quiet;
-          sleep 12h & wait $${!};
-        done"
 
 volumes:
   thumbnail_output:
-  certbot_webroot:
-  certbot_certs:
-
-networks:
-  internal:
-    driver: bridge
