@@ -44,8 +44,8 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* 우클릭 방지 및 드래그 방지 */
-    img, canvas, #result-img, #preview-img, .preview-canvas {
+    /* 우클릭 방지 및 드래그 방지 (선택/드래그만 차단, 클릭은 허용) */
+    img, canvas, #result-img, #preview-img, .preview-canvas, #preview-canvas {
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
@@ -54,7 +54,6 @@
       -khtml-user-drag: none;
       -moz-user-drag: none;
       -o-user-drag: none;
-      pointer-events: none;
     }
 
     body {
