@@ -1,6 +1,10 @@
 from pathlib import Path
 import io
 import os
+import time
+import asyncio
+import logging
+from contextlib import asynccontextmanager
 from urllib.parse import quote
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -11,15 +15,62 @@ from PIL import Image
 
 from main import ThumbnailGenerator
 
-app = FastAPI(
-    title="썸네일 생성기 서비스",
-    description="이미지 URL 또는 업로드 파일로 썸네일을 생성하는 서비스",
-    version="3.0.0"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
 OUTPUT_DIR = BASE_DIR / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
+
+# ── 자동 파일 정리 설정 ──
+FILE_MAX_AGE_SECONDS = 60 * 60      # 1시간 지난 파일 삭제
+CLEANUP_INTERVAL_SECONDS = 60 * 10  # 10분마다 정리 실행
+
+
+def cleanup_old_files():
+    """output 디렉토리에서 1시간 이상 된 파일 삭제"""
+    now = time.time()
+    deleted = 0
+    total_freed = 0
+    for f in OUTPUT_DIR.glob("output_thumbnail_*.png"):
+        age = now - f.stat().st_mtime
+        if age > FILE_MAX_AGE_SECONDS:
+            size = f.stat().st_size
+            f.unlink()
+            deleted += 1
+            total_freed += size
+    if deleted > 0:
+        logger.info(f"[정리] {deleted}개 파일 삭제, {total_freed / 1024 / 1024:.1f}MB 확보")
+
+
+async def scheduled_cleanup():
+    """백그라운드에서 주기적으로 파일 정리"""
+    while True:
+        await asyncio.sleep(CLEANUP_INTERVAL_SECONDS)
+        try:
+            cleanup_old_files()
+        except Exception as e:
+            logger.error(f"[정리] 오류 발생: {e}")
+
+
+@asynccontextmanager
+async def lifespan(app):
+    """서버 시작/종료 시 실행"""
+    # 시작: 오래된 파일 즉시 정리 + 주기적 정리 태스크 시작
+    cleanup_old_files()
+    task = asyncio.create_task(scheduled_cleanup())
+    logger.info("[시작] 자동 파일 정리 스케줄러 시작 (1시간 보관, 10분 간격 정리)")
+    yield
+    # 종료: 태스크 취소
+    task.cancel()
+
+
+app = FastAPI(
+    title="썸네일 생성기 서비스",
+    description="이미지 URL 또는 업로드 파일로 썸네일을 생성하는 서비스",
+    version="3.0.0",
+    lifespan=lifespan
+)
 
 app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
 
