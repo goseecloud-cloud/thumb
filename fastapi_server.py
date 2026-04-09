@@ -48,6 +48,23 @@ FONT_MAP = {
 }
 
 
+def normalize_text(text: str) -> str:
+    """
+    텍스트 정규화: 특수 공백/제어문자 제거
+    - 특수 공백(U+00A0, U+3000 등) → 일반 공백
+    - 제어문자 제거 (줄바꿈 제외)
+    - Windows/Mac 줄바꿈 정규화
+    """
+    import re
+    # 특수 공백 정규화
+    text = re.sub(r'[\u00A0\u1680\u2000-\u200B\u202F\u205F\u3000\uFEFF]', ' ', text)
+    # 줄바꿈 정규화
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    # 제어문자 제거 (줄바꿈 제외)
+    text = ''.join(ch if ch == '\n' or ord(ch) >= 0x20 else '' for ch in text)
+    return text.strip()
+
+
 def _create_thumbnail_image(
     generator: ThumbnailGenerator,
     source_image: Image.Image,
@@ -145,6 +162,10 @@ async def generate_thumbnail_by_url(payload: ThumbnailRequest, request: Request)
         raise HTTPException(status_code=400, detail="url은 필수입니다.")
     if not payload.title.strip():
         raise HTTPException(status_code=400, detail="title은 필수입니다.")
+    
+    # 텍스트 정규화
+    payload.title = normalize_text(payload.title)
+    
     try:
         generator = ThumbnailGenerator()
         source_image = generator.download_image(payload.url)
@@ -196,6 +217,10 @@ async def generate_thumbnail_by_file(
 ):
     if not title.strip():
         raise HTTPException(status_code=400, detail="title은 필수입니다.")
+    
+    # 텍스트 정규화
+    title = normalize_text(title)
+    
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="이미지 파일만 업로드할 수 있습니다.")
 
