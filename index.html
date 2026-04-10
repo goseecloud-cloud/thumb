@@ -1705,8 +1705,7 @@
 
       goToStep(3);
       showToast('썸네일이 생성되었습니다!', 'success');
-      // 생성 완료 즉시 쿠팡 팝업 표시
-      showCoupangModal(data.thumbnail_url, data.filename);
+      // 쿠팡 팝업 비활성화 - 바로 step3 화면으로 이동
     } catch (err) {
       document.getElementById('error-msg').textContent = err.message;
       errBox.classList.add('show');
@@ -1785,8 +1784,8 @@
 
   function handleDownloadClick(e) {
     e.preventDefault();
-    const dlLink = document.getElementById('download-link');
-    showCoupangModal(dlLink.href, dlLink.getAttribute('data-filename') || 'thumbnail.png');
+    // 쿠팡 팝업 비활성화 - 바로 다운로드
+    directDownload(e);
   }
 
   function showCoupangModal(url, filename) {
@@ -1850,7 +1849,8 @@
   });
 </script>
 <!-- 쿠팡 파트너스 팝업 모달 -->
-<div class="coupang-overlay" id="coupang-overlay">
+<!-- 쿠팡 파트너스 팝업 (임시 비활성화) -->
+<div class="coupang-overlay" id="coupang-overlay" style="display:none !important">
   <div class="coupang-modal">
     <div class="modal-icon">🛍️</div>
     <h3>잠깐! 썸네일 다운로드 전에</h3>
