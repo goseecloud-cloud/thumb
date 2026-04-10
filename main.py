@@ -528,8 +528,9 @@ class ThumbnailGenerator:
                 words = [w for w in words if w]  # 빈 단어 제거
                 # 공백 너비: textbbox로 'ㅇ' 한 글자 너비의 30%로 고정
                 # (Gmarket Sans 등 일부 폰트에서 공백 측정이 부정확하므로 기준 글자 사용)
-                ref_char_w = self.get_text_width('이', font)
-                space_w = max(int(ref_char_w * 0.30), int(font_size * 0.18))
+                # 공백 너비: Paperlogy/Nanum 폰트 실측 기준 em의 22~28%
+                # Gmarket Sans는 공백 글리프 없어 폰트 측정 불가 → em 기준 고정
+                space_w = int(font_size * 0.22)
                 word_widths = [self.get_text_width(w, font) for w in words]
                 total_w = sum(word_widths) + space_w * (len(words) - 1)
                 cur_x = (width - total_w) // 2

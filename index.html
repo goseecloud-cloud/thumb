@@ -1624,8 +1624,8 @@
         if (cleanLine.includes(' ')) {
           const words = cleanLine.split(' ').filter(w => w.length > 0);
           // 공백 너비: '이' 한 글자 너비의 30% 고정 (폰트마다 공백 측정이 다름)
-          const refCharW = ctx.measureText('이').width;
-          const spaceW = Math.max(refCharW * 0.30, fsize * 0.18);
+          // 공백 너비: em의 22% 고정 (Paperlogy 기준, 자연스러운 한글 띄어쓰기)
+          const spaceW = fsize * 0.22;
           const wordWidths = words.map(w => ctx.measureText(w).width);
           const totalW = wordWidths.reduce((a, b) => a + b, 0) + spaceW * (words.length - 1);
           let curX = (cw - totalW) / 2;
