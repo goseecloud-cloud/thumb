@@ -525,17 +525,18 @@ class ThumbnailGenerator:
             # → 공백 문자 자체를 draw.text에 넘기지 않아 tofu 박스 완전 방지
             if ' ' in clean_line:
                 words = clean_line.split(' ')
-                # 전체 줄 너비 계산 (단어 + 공백 너비 합산)
-                space_w = self.get_text_width('  ', font) - self.get_text_width(' ', font)  # 실제 공백 1칸 너비
-                # 공백 너비가 0이면 폰트 크기의 25%로 대체
-                if space_w <= 0:
-                    space_w = int(font_size * 0.25)
+                words = [w for w in words if w]  # 빈 단어 제거
+                # 공백 너비: textbbox로 'ㅇ' 한 글자 너비의 30%로 고정
+                # (Gmarket Sans 등 일부 폰트에서 공백 측정이 부정확하므로 기준 글자 사용)
+                ref_char_w = self.get_text_width('이', font)
+                space_w = max(int(ref_char_w * 0.30), int(font_size * 0.18))
                 word_widths = [self.get_text_width(w, font) for w in words]
                 total_w = sum(word_widths) + space_w * (len(words) - 1)
                 cur_x = (width - total_w) // 2
                 for j, word in enumerate(words):
-                    draw.text((cur_x, current_y), word, fill=text_color, font=font)
-                    cur_x += word_widths[j] + space_w
+                    if word:
+                        draw.text((cur_x, current_y), word, fill=text_color, font=font)
+                    cur_x += word_widths[j] + (space_w if j < len(words) - 1 else 0)
             else:
                 line_width = self.get_text_width(clean_line, font)
                 line_x = (width - line_width) // 2

@@ -1622,15 +1622,17 @@
 
         // 공백 포함 줄은 단어별로 쪼개서 각각 렌더링 (tofu 박스 완전 방지)
         if (cleanLine.includes(' ')) {
-          const words = cleanLine.split(' ');
-          const spaceW = Math.max(ctx.measureText('  ').width - ctx.measureText(' ').width, fsize * 0.25);
+          const words = cleanLine.split(' ').filter(w => w.length > 0);
+          // 공백 너비: '이' 한 글자 너비의 30% 고정 (폰트마다 공백 측정이 다름)
+          const refCharW = ctx.measureText('이').width;
+          const spaceW = Math.max(refCharW * 0.30, fsize * 0.18);
           const wordWidths = words.map(w => ctx.measureText(w).width);
           const totalW = wordWidths.reduce((a, b) => a + b, 0) + spaceW * (words.length - 1);
           let curX = (cw - totalW) / 2;
           ctx.textAlign = 'left';
           words.forEach((word, j) => {
-            ctx.fillText(word, curX, y);
-            curX += wordWidths[j] + spaceW;
+            if (word) ctx.fillText(word, curX, y);
+            curX += wordWidths[j] + (j < words.length - 1 ? spaceW : 0);
           });
           ctx.textAlign = 'center';
         } else {
