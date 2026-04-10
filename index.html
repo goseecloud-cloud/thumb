@@ -1507,35 +1507,8 @@
       const maxW = cw - textMargin * 2;
       const maxH = ch - textMargin * 2;
 
-      // 줄바꿈 — \n 지원 + CJK 글자 단위 + 영문 단어 단위 혼합
-      function isCJK(ch) {
-        const cp = ch.codePointAt(0);
-        return (cp >= 0xAC00 && cp <= 0xD7A3) || // 한글 완성형
-               (cp >= 0x1100 && cp <= 0x11FF) || // 한글 자모
-               (cp >= 0x3130 && cp <= 0x318F) || // 한글 호환 자모
-               (cp >= 0x4E00 && cp <= 0x9FFF) || // 한자
-               (cp >= 0x3040 && cp <= 0x30FF);   // 히라가나·가타카나
-      }
-
-      // 텍스트를 토큰(CJK 1글자 / 영문 단어 / 공백) 배열로 분리
-      function tokenize(paragraph) {
-        const tokens = [];
-        let buf = '';
-        for (const ch of paragraph) {
-          if (ch === ' ') {
-            if (buf) { tokens.push(buf); buf = ''; }
-            tokens.push(' ');
-          } else if (isCJK(ch)) {
-            if (buf) { tokens.push(buf); buf = ''; }
-            tokens.push(ch);          // CJK는 글자 하나씩
-          } else {
-            buf += ch;                // 영문/숫자는 단어로 묶음
-          }
-        }
-        if (buf) tokens.push(buf);
-        return tokens;
-      }
-
+      // 줄바꿈 — 공백 있으면 반드시 단어(공백) 단위로만 줄바꿈
+      //          공백 없으면 글자 단위 줄바꿈 (fallback)
       function wrapText(text, fs) {
         ctx.font = `bold ${fs}px '${fontName}', sans-serif`;
         const lines = [];
@@ -1543,46 +1516,70 @@
         for (const paragraph of text.split('\n')) {
           if (!paragraph) { lines.push(''); continue; }
 
-          const tokens = tokenize(paragraph);
-          let cur = '';
-          let pendingSpace = false;  // 공백 플래그 (직접 붙이지 않음)
+          if (paragraph.includes(' ')) {
+            // ── 공백 있음 → 단어 단위로만 줄바꿈 ──
+            const words = paragraph.split(' ').filter(w => w.length > 0);
+            let cur = '';
 
-          for (const tok of tokens) {
-            if (tok === ' ') {
-              if (cur) pendingSpace = true;  // 단어 사이 공백 예약
-              continue;
-            }
-
-            // 공백 포함 테스트 문자열
-            const test = cur ? cur + (pendingSpace ? ' ' : '') + tok : tok;
-
-            if (ctx.measureText(test).width <= maxW) {
-              cur = test;
-              pendingSpace = false;
-            } else {
-              // 현재 줄 확정
-              if (cur) lines.push(cur);
-              pendingSpace = false;
-
-              // 토큰 자체가 maxW 초과하면 글자 단위 강제 분리
-              if (ctx.measureText(tok).width > maxW) {
-                let charLine = '';
-                for (const ch of tok) {
-                  const testCh = charLine + ch;
-                  if (ctx.measureText(testCh).width <= maxW) {
-                    charLine = testCh;
+            for (const word of words) {
+              if (!cur) {
+                // 첫 단어: 단어 자체가 maxW 초과 시 글자 단위 분리
+                if (ctx.measureText(word).width > maxW) {
+                  let charLine = '';
+                  for (const ch of word) {
+                    const testCh = charLine + ch;
+                    if (ctx.measureText(testCh).width <= maxW) {
+                      charLine = testCh;
+                    } else {
+                      if (charLine) lines.push(charLine);
+                      charLine = ch;
+                    }
+                  }
+                  cur = charLine;
+                } else {
+                  cur = word;
+                }
+              } else {
+                const test = cur + ' ' + word;
+                if (ctx.measureText(test).width <= maxW) {
+                  cur = test;
+                } else {
+                  // 현재 줄 확정 후 새 줄 시작
+                  lines.push(cur);
+                  if (ctx.measureText(word).width > maxW) {
+                    let charLine = '';
+                    for (const ch of word) {
+                      const testCh = charLine + ch;
+                      if (ctx.measureText(testCh).width <= maxW) {
+                        charLine = testCh;
+                      } else {
+                        if (charLine) lines.push(charLine);
+                        charLine = ch;
+                      }
+                    }
+                    cur = charLine;
                   } else {
-                    if (charLine) lines.push(charLine);
-                    charLine = ch;
+                    cur = word;
                   }
                 }
-                cur = charLine;
-              } else {
-                cur = tok;
               }
             }
+            if (cur) lines.push(cur);
+
+          } else {
+            // ── 공백 없음 → 글자 단위 줄바꿈 (기존 방식) ──
+            let cur = '';
+            for (const ch of paragraph) {
+              const test = cur + ch;
+              if (ctx.measureText(test).width <= maxW) {
+                cur = test;
+              } else {
+                if (cur) lines.push(cur);
+                cur = ch;
+              }
+            }
+            if (cur) lines.push(cur);
           }
-          if (cur) lines.push(cur);
         }
         return lines.length ? lines : [''];
       }
