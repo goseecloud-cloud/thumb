@@ -1617,8 +1617,25 @@
       const startY = (ch - totalH) / 2;
       lines.forEach((line, i) => {
         const cleanLine = line.trim();
-        if (!cleanLine) return;  // 빈 줄 건너뜀 (tofu 박스 방지)
-        ctx.fillText(cleanLine, cw / 2, startY + i * lineH + fsize);
+        if (!cleanLine) return;
+        const y = startY + i * lineH + fsize;
+
+        // 공백 포함 줄은 단어별로 쪼개서 각각 렌더링 (tofu 박스 완전 방지)
+        if (cleanLine.includes(' ')) {
+          const words = cleanLine.split(' ');
+          const spaceW = Math.max(ctx.measureText('  ').width - ctx.measureText(' ').width, fsize * 0.25);
+          const wordWidths = words.map(w => ctx.measureText(w).width);
+          const totalW = wordWidths.reduce((a, b) => a + b, 0) + spaceW * (words.length - 1);
+          let curX = (cw - totalW) / 2;
+          ctx.textAlign = 'left';
+          words.forEach((word, j) => {
+            ctx.fillText(word, curX, y);
+            curX += wordWidths[j] + spaceW;
+          });
+          ctx.textAlign = 'center';
+        } else {
+          ctx.fillText(cleanLine, cw / 2, y);
+        }
       });
     }
 

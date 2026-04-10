@@ -516,14 +516,30 @@ class ThumbnailGenerator:
         start_y = (height - actual_total_height) // 2
 
         for i, line in enumerate(lines):
-            # 공백만 있는 줄은 건너뜀 (tofu 박스 방지)
             clean_line = line.strip()
             if not clean_line:
                 continue
-            line_width = self.get_text_width(clean_line, font)
-            line_x = (width - line_width) // 2
             current_y = start_y + int(i * line_height * line_spacing)
-            draw.text((line_x, current_y), clean_line, fill=text_color, font=font)
+
+            # 공백 포함 줄은 단어별로 쪼개서 각각 렌더링
+            # → 공백 문자 자체를 draw.text에 넘기지 않아 tofu 박스 완전 방지
+            if ' ' in clean_line:
+                words = clean_line.split(' ')
+                # 전체 줄 너비 계산 (단어 + 공백 너비 합산)
+                space_w = self.get_text_width('  ', font) - self.get_text_width(' ', font)  # 실제 공백 1칸 너비
+                # 공백 너비가 0이면 폰트 크기의 25%로 대체
+                if space_w <= 0:
+                    space_w = int(font_size * 0.25)
+                word_widths = [self.get_text_width(w, font) for w in words]
+                total_w = sum(word_widths) + space_w * (len(words) - 1)
+                cur_x = (width - total_w) // 2
+                for j, word in enumerate(words):
+                    draw.text((cur_x, current_y), word, fill=text_color, font=font)
+                    cur_x += word_widths[j] + space_w
+            else:
+                line_width = self.get_text_width(clean_line, font)
+                line_x = (width - line_width) // 2
+                draw.text((line_x, current_y), clean_line, fill=text_color, font=font)
 
         print(f"커스텀 텍스트 추가 완료: '{title_text}' ({len(lines)}줄, 폰트: {font_size}pt, 색상: {text_color})")
         return image
