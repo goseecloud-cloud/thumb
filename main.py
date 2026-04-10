@@ -32,7 +32,7 @@ class ThumbnailGenerator:
         self.border_width = 8    # 테두리 두께 (px)
         self.overlay_opacity = 0.43  # 어두운 필터 불투명도 (43%)
         self.default_font_size = 225  # 기본 폰트 크기 (pt) - 특대형 고정
-        self.line_spacing = 1.3  # 줄간격 비율 (1.0이 기본 줄간격, 값이 클수록 줄간격이 넓어짐)
+        self.line_spacing = 1.15  # 줄간격 비율 (줄수 많을수록 자동으로 좁아짐)
         self.upload_url = "http://localhost:9999/upload"  # 로컬 Docker 파일서버 URL
         
         # 한글 폰트 경로 목록 (페이퍼로지 폰트 우선)
@@ -487,35 +487,43 @@ class ThumbnailGenerator:
         
         font_size = self.default_font_size
         min_font_size = 40
-        line_spacing = self.line_spacing
-        
+
         while font_size >= min_font_size:
             font = self.load_font(font_size)
             lines = self.wrap_text(title_text, font, text_area_width)
+            # 줄 수에 따라 줄간격 동적 조정: 줄 많을수록 더 좁게
+            n = len(lines)
+            if n <= 1:   line_spacing = 1.15
+            elif n == 2: line_spacing = 1.10
+            elif n == 3: line_spacing = 1.05
+            else:        line_spacing = 1.00
             total_width, total_height = self.calculate_multiline_text_size(lines, font, line_spacing)
-            
             if total_width <= text_area_width and total_height <= text_area_height:
                 break
             font_size -= 10
-        
+
         font = self.load_font(font_size)
         lines = self.wrap_text(title_text, font, text_area_width)
-        total_width, total_height = self.calculate_multiline_text_size(lines, font, line_spacing)
-        
-        # 줄 높이를 폰트 크기 기준으로 계산 (캔버스와 동일)
-        line_height = font_size
+        n = len(lines)
+        if n <= 1:   line_spacing = 1.15
+        elif n == 2: line_spacing = 1.10
+        elif n == 3: line_spacing = 1.05
+        else:        line_spacing = 1.00
 
-        # 전체 텍스트 블록을 이미지 정중앙에 배치 (상하 중앙)
-        # 총 높이 = (줄수-1) * (line_height * line_spacing) + line_height
+        # 줄 높이를 폰트 크기 기준으로 계산
+        line_height = font_size
         actual_total_height = (len(lines) - 1) * (line_height * line_spacing) + line_height
         start_y = (height - actual_total_height) // 2
 
         for i, line in enumerate(lines):
-            line_width = self.get_text_width(line, font)
+            # 공백만 있는 줄은 건너뜀 (tofu 박스 방지)
+            clean_line = line.strip()
+            if not clean_line:
+                continue
+            line_width = self.get_text_width(clean_line, font)
             line_x = (width - line_width) // 2
-            # 각 줄의 Y 좌표 = start_y + (줄번호 * line_height * line_spacing)
             current_y = start_y + int(i * line_height * line_spacing)
-            draw.text((line_x, current_y), line, fill=text_color, font=font)
+            draw.text((line_x, current_y), clean_line, fill=text_color, font=font)
 
         print(f"커스텀 텍스트 추가 완료: '{title_text}' ({len(lines)}줄, 폰트: {font_size}pt, 색상: {text_color})")
         return image

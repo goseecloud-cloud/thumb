@@ -1587,13 +1587,23 @@
         return lines.length ? lines : [''];
       }
 
+      // 줄 수에 따른 동적 줄간격 (백엔드와 동일)
+      function getLineSpacing(n) {
+        if (n <= 1) return 1.15;
+        if (n === 2) return 1.10;
+        if (n === 3) return 1.05;
+        return 1.00;
+      }
+
       // 폰트 크기 자동 조정
       let lines = wrapText(title, fsize);
-      const lineH = () => fsize * 1.3;
-      while (fsize > 12 && lines.length * lineH() > maxH) {
+      while (fsize > 12 && (lines.length - 1) * fsize * getLineSpacing(lines.length) + fsize > maxH) {
         fsize -= Math.max(1, Math.round(fsize * 0.08));
         lines = wrapText(title, fsize);
       }
+
+      const lineSpacing = getLineSpacing(lines.length);
+      const lineH = fsize * lineSpacing;
 
       ctx.font = `bold ${fsize}px '${fontName}', sans-serif`;
       ctx.fillStyle = selectedColor === 'white' ? '#ffffff'
@@ -1603,10 +1613,12 @@
       ctx.textBaseline = 'alphabetic';
 
       // 전체 텍스트 블록 높이 → 이미지 정중앙 배치
-      const totalH = (lines.length - 1) * lineH() + fsize;
+      const totalH = (lines.length - 1) * lineH + fsize;
       const startY = (ch - totalH) / 2;
       lines.forEach((line, i) => {
-        ctx.fillText(line, cw / 2, startY + i * lineH() + fsize);
+        const cleanLine = line.trim();
+        if (!cleanLine) return;  // 빈 줄 건너뜀 (tofu 박스 방지)
+        ctx.fillText(cleanLine, cw / 2, startY + i * lineH + fsize);
       });
     }
 
