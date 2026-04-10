@@ -713,6 +713,56 @@
       color: var(--accent);
     }
 
+    /* ── 텍스트 위치 선택 그리드 ── */
+    .position-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      max-width: 200px;
+    }
+    .pos-btn {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      border: 2px solid var(--border);
+      background: var(--surface2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      font-size: 15px;
+    }
+    .pos-btn:hover { border-color: var(--accent); background: rgba(91,94,244,0.08); }
+    .pos-btn.selected {
+      border-color: var(--accent);
+      background: rgba(91,94,244,0.18);
+      box-shadow: 0 0 0 2px rgba(91,94,244,0.25);
+    }
+    .pos-btn svg { width: 12px; height: 12px; fill: var(--text-muted); }
+    .pos-btn.selected svg { fill: var(--accent); }
+
+    /* ── 글자 크기 슬라이더 ── */
+    .font-size-slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .font-size-slider-wrap input[type=range] { flex: 1; }
+    .font-size-label {
+      min-width: 52px;
+      text-align: right;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .font-size-hints {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
     /* ── Divider ── */
     .divider {
       height: 1px;
@@ -1154,6 +1204,55 @@
               </div>
             </div>
 
+            <!-- 글자 크기 슬라이더 -->
+            <div class="form-group">
+              <label>글자 크기</label>
+              <div class="font-size-slider-wrap">
+                <span style="font-size:12px;color:var(--text-muted);">작게</span>
+                <input type="range" id="font-size-slider" min="60" max="100" value="80"
+                       oninput="onFontSizeSlider(this.value)" />
+                <span style="font-size:12px;color:var(--text-muted);">크게</span>
+                <span class="font-size-label" id="font-size-val">보통</span>
+              </div>
+              <div class="font-size-hints">
+                <span>60%</span><span>70%</span><span>80%</span><span>90%</span><span>100%</span>
+              </div>
+            </div>
+
+            <!-- 텍스트 위치 -->
+            <div class="form-group">
+              <label>텍스트 위치</label>
+              <div class="position-grid" id="position-grid">
+                <button class="pos-btn" data-pos="top-left"     onclick="selectPosition(this)" title="좌상단">
+                  <svg viewBox="0 0 10 10"><rect x="0" y="0" width="5" height="3"/></svg>
+                </button>
+                <button class="pos-btn" data-pos="top-center"   onclick="selectPosition(this)" title="상단 중앙">
+                  <svg viewBox="0 0 10 10"><rect x="2.5" y="0" width="5" height="3"/></svg>
+                </button>
+                <button class="pos-btn" data-pos="top-right"    onclick="selectPosition(this)" title="우상단">
+                  <svg viewBox="0 0 10 10"><rect x="5" y="0" width="5" height="3"/></svg>
+                </button>
+                <button class="pos-btn" data-pos="middle-left"  onclick="selectPosition(this)" title="좌중앙">
+                  <svg viewBox="0 0 10 10"><rect x="0" y="3.5" width="5" height="3"/></svg>
+                </button>
+                <button class="pos-btn selected" data-pos="middle-center" onclick="selectPosition(this)" title="정중앙 (기본)">
+                  <svg viewBox="0 0 10 10"><rect x="2.5" y="3.5" width="5" height="3"/></svg>
+                </button>
+                <button class="pos-btn" data-pos="middle-right" onclick="selectPosition(this)" title="우중앙">
+                  <svg viewBox="0 0 10 10"><rect x="5" y="3.5" width="5" height="3"/></svg>
+                </button>
+                <button class="pos-btn" data-pos="bottom-left"  onclick="selectPosition(this)" title="좌하단">
+                  <svg viewBox="0 0 10 10"><rect x="0" y="7" width="5" height="3"/></svg>
+                </button>
+                <button class="pos-btn" data-pos="bottom-center" onclick="selectPosition(this)" title="하단 중앙">
+                  <svg viewBox="0 0 10 10"><rect x="2.5" y="7" width="5" height="3"/></svg>
+                </button>
+                <button class="pos-btn" data-pos="bottom-right" onclick="selectPosition(this)" title="우하단">
+                  <svg viewBox="0 0 10 10"><rect x="5" y="7" width="5" height="3"/></svg>
+                </button>
+              </div>
+            </div>
+
             <div class="error-box" id="error-box">
               <strong>오류가 발생했습니다.</strong><br/><span id="error-msg"></span>
             </div>
@@ -1254,6 +1353,8 @@
   let currentStep = 1;
   let previewTimer = null;
   let uploadedImageBitmap = null; // 캔버스용 원본 이미지
+  let selectedFontSizeRatio = 0.80; // 글자 크기 비율 (0.6 ~ 1.0)
+  let selectedPosition = 'middle-center'; // 텍스트 위치
 
   // ── 폰트 로드 (FontFace API) ──
   const FONTS = {
@@ -1410,11 +1511,31 @@
     schedulePreview();
   }
 
-  // ── Font size selection ──
+  // ── Font size selection (legacy btn) ──
   function selectFontSize(el) {
     document.querySelectorAll('.font-size-btn').forEach(b => b.classList.remove('selected'));
     el.classList.add('selected');
     selectedFontSize = parseInt(el.dataset.size);
+    schedulePreview();
+  }
+
+  // ── Font size slider ──
+  function onFontSizeSlider(val) {
+    const ratio = parseInt(val) / 100;
+    selectedFontSizeRatio = ratio;
+    // 라벨
+    const labels = { 60:'아주 작게', 70:'작게', 80:'보통', 90:'크게', 100:'아주 크게' };
+    const snap = Math.round(ratio * 10) * 10; // 10단위로 반올림
+    document.getElementById('font-size-val').textContent =
+      labels[snap] || Math.round(ratio * 100) + '%';
+    schedulePreview();
+  }
+
+  // ── Text position selection ──
+  function selectPosition(el) {
+    document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedPosition = el.dataset.pos;
     schedulePreview();
   }
 
@@ -1500,7 +1621,8 @@
       const fontName = FONTS[selectedFont]?.name || 'Paperlogy';
 
       const scale      = cw / 1080;
-      let   fsize      = Math.round(selectedFontSize * scale);
+      // 글자 크기 슬라이더 비율 적용
+      let   fsize      = Math.round(selectedFontSize * scale * selectedFontSizeRatio);
       const textMargin = hasBorder
         ? BORDER_MARGIN + BORDER_WIDTH + INNER_PAD
         : Math.round(cw * (56 / 1080));
@@ -1609,9 +1731,22 @@
       ctx.textAlign    = 'center';
       ctx.textBaseline = 'alphabetic';
 
-      // 전체 텍스트 블록 높이 → 이미지 정중앙 배치
+      // 위치(position)에 따른 startY / baseX 계산
       const totalH = (lines.length - 1) * lineH + fsize;
-      const startY = (ch - totalH) / 2;
+      const [vPos, hPos] = selectedPosition.split('-');  // e.g. 'middle-center' → ['middle','center']
+
+      // 수직 위치
+      let startY;
+      if (vPos === 'top')         startY = textMargin;
+      else if (vPos === 'bottom') startY = ch - textMargin - totalH;
+      else                        startY = (ch - totalH) / 2;  // middle (기본)
+
+      // 수평 기준점
+      let baseX;
+      if (hPos === 'left')        baseX = textMargin;
+      else if (hPos === 'right')  baseX = cw - textMargin;
+      else                        baseX = cw / 2;  // center (기본)
+
       lines.forEach((line, i) => {
         const cleanLine = line.trim();
         if (!cleanLine) return;
@@ -1620,12 +1755,14 @@
         // 공백 포함 줄은 단어별로 쪼개서 각각 렌더링 (tofu 박스 완전 방지)
         if (cleanLine.includes(' ')) {
           const words = cleanLine.split(' ').filter(w => w.length > 0);
-          // 공백 너비: '이' 한 글자 너비의 30% 고정 (폰트마다 공백 측정이 다름)
-          // 공백 너비: em의 22% 고정 (Paperlogy 기준, 자연스러운 한글 띄어쓰기)
           const spaceW = fsize * 0.22;
           const wordWidths = words.map(w => ctx.measureText(w).width);
           const totalW = wordWidths.reduce((a, b) => a + b, 0) + spaceW * (words.length - 1);
-          let curX = (cw - totalW) / 2;
+          // 수평 위치에 따라 시작 X 결정
+          let curX;
+          if (hPos === 'left')       curX = textMargin;
+          else if (hPos === 'right') curX = cw - textMargin - totalW;
+          else                       curX = (cw - totalW) / 2;
           ctx.textAlign = 'left';
           words.forEach((word, j) => {
             if (word) ctx.fillText(word, curX, y);
@@ -1633,7 +1770,18 @@
           });
           ctx.textAlign = 'center';
         } else {
-          ctx.fillText(cleanLine, cw / 2, y);
+          // 단일 단어: 수평 align 적용
+          if (hPos === 'left') {
+            ctx.textAlign = 'left';
+            ctx.fillText(cleanLine, textMargin, y);
+            ctx.textAlign = 'center';
+          } else if (hPos === 'right') {
+            ctx.textAlign = 'right';
+            ctx.fillText(cleanLine, cw - textMargin, y);
+            ctx.textAlign = 'center';
+          } else {
+            ctx.fillText(cleanLine, cw / 2, y);
+          }
         }
       });
     }
@@ -1678,6 +1826,8 @@
       form.append('title', title);
       form.append('shape', selectedShape);
       form.append('font_size', selectedFontSize);
+      form.append('font_size_ratio', selectedFontSizeRatio);
+      form.append('text_position', selectedPosition);
       form.append('border', border ? 'true' : 'false');
       form.append('text_color', selectedColor);
       form.append('overlay_opacity', opacity);
@@ -1728,6 +1878,14 @@
     document.querySelector('[data-font="paperlogy"]').classList.add('selected');
     selectedFont = 'paperlogy';
     selectedFontSize = 225;
+    // 글자 크기 슬라이더 초기화
+    document.getElementById('font-size-slider').value = 80;
+    document.getElementById('font-size-val').textContent = '보통';
+    selectedFontSizeRatio = 0.80;
+    // 텍스트 위치 초기화
+    document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelector('[data-pos="middle-center"]').classList.add('selected');
+    selectedPosition = 'middle-center';
     document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
     document.querySelector('[data-color="white"]').classList.add('selected');
     selectedColor = 'white';

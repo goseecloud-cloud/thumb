@@ -122,6 +122,8 @@ def _create_thumbnail_image(
     title: str,
     shape: str = "square",
     font_size: int | None = None,
+    font_size_ratio: float = 1.0,
+    text_position: str = "middle-center",
     border: bool = True,
     text_color: str = "white",
     overlay_opacity: float = 0.5,
@@ -160,7 +162,11 @@ def _create_thumbnail_image(
     font_abs = str(BASE_DIR / font_rel)
     generator.font_paths = [font_abs] + generator.font_paths
 
-    image = generator.add_text_overlay_custom(image, title, text_color)
+    image = generator.add_text_overlay_custom(
+        image, title, text_color,
+        font_size_ratio=font_size_ratio,
+        text_position=text_position,
+    )
     return image
 
 
@@ -261,6 +267,8 @@ async def generate_thumbnail_by_file(
     title: str = Form(...),
     shape: str = Form("square"),
     font_size: int = Form(0),
+    font_size_ratio: float = Form(1.0),
+    text_position: str = Form("middle-center"),
     border: str = Form("true"),
     text_color: str = Form("white"),
     overlay_opacity: float = Form(0.5),
@@ -292,6 +300,8 @@ async def generate_thumbnail_by_file(
             title,
             shape=shape,
             font_size=font_size if font_size > 0 else None,
+            font_size_ratio=max(0.4, min(1.0, font_size_ratio)),
+            text_position=text_position,
             border=(border.lower() == "true"),
             text_color=text_color,
             overlay_opacity=overlay_opacity,

@@ -450,34 +450,39 @@ class ThumbnailGenerator:
         print(f"대형 텍스트 추가 완료: '{title_text}' ({len(lines)}줄, 폰트 크기: {font_size}pt)")
         return image
 
-    def add_text_overlay_custom(self, image, title_text, text_color='white'):
+    def add_text_overlay_custom(self, image, title_text, text_color='white',
+                                font_size_ratio=1.0, text_position='middle-center'):
         """
-        이미지 중앙에 제목 텍스트 추가 (커스텀 색상 지원)
-        
+        이미지에 제목 텍스트 추가 (크기 비율·위치 지원)
+
         Args:
             image (PIL.Image): 원본 이미지
             title_text (str): 추가할 제목 텍스트
             text_color (str): 텍스트 색상 (기본: 'white')
-            
+            font_size_ratio (float): 글자 크기 비율 0.6~1.0 (기본: 1.0)
+            text_position (str): 'top-left' | 'top-center' | 'top-right' |
+                                  'middle-left' | 'middle-center' | 'middle-right' |
+                                  'bottom-left' | 'bottom-center' | 'bottom-right'
         Returns:
             PIL.Image: 텍스트가 추가된 이미지
         """
         draw = ImageDraw.Draw(image)
         width, height = image.size
-        
-        # 테두리 안쪽 내부 여백: 원본 기준 텍스트 폭 ~83% 맞춤 (56px)
+
+        # 테두리 안쪽 내부 여백
         inner_pad = 56
         margin = self.border_margin + self.border_width + inner_pad
         text_area_width = width - 2 * margin
         text_area_height = height - 2 * margin
-        
-        font_size = self.default_font_size
+
+        # 글자 크기: 기본값에 비율 적용
+        base_font_size = int(self.default_font_size * max(0.4, min(1.0, font_size_ratio)))
+        font_size = base_font_size
         min_font_size = 40
 
         while font_size >= min_font_size:
             font = self.load_font(font_size)
             lines = self.wrap_text(title_text, font, text_area_width)
-            # 줄 수에 따라 줄간격 동적 조정: 줄 많을수록 더 좁게
             n = len(lines)
             if n <= 1:   line_spacing = 1.15
             elif n == 2: line_spacing = 1.10
@@ -496,10 +501,21 @@ class ThumbnailGenerator:
         elif n == 3: line_spacing = 1.05
         else:        line_spacing = 1.00
 
-        # 줄 높이를 폰트 크기 기준으로 계산
         line_height = font_size
         actual_total_height = (len(lines) - 1) * (line_height * line_spacing) + line_height
-        start_y = (height - actual_total_height) // 2
+
+        # 위치 파싱
+        parts = text_position.split('-')
+        v_pos = parts[0] if len(parts) >= 1 else 'middle'   # top / middle / bottom
+        h_pos = parts[1] if len(parts) >= 2 else 'center'   # left / center / right
+
+        # 수직 시작 Y
+        if v_pos == 'top':
+            start_y = margin
+        elif v_pos == 'bottom':
+            start_y = height - margin - actual_total_height
+        else:  # middle
+            start_y = (height - actual_total_height) // 2
 
         for i, line in enumerate(lines):
             clean_line = line.strip()
@@ -507,29 +523,36 @@ class ThumbnailGenerator:
                 continue
             current_y = start_y + int(i * line_height * line_spacing)
 
-            # 공백 포함 줄은 단어별로 쪼개서 각각 렌더링
-            # → 공백 문자 자체를 draw.text에 넘기지 않아 tofu 박스 완전 방지
             if ' ' in clean_line:
-                words = clean_line.split(' ')
-                words = [w for w in words if w]  # 빈 단어 제거
-                # 공백 너비: textbbox로 'ㅇ' 한 글자 너비의 30%로 고정
-                # (Gmarket Sans 등 일부 폰트에서 공백 측정이 부정확하므로 기준 글자 사용)
-                # 공백 너비: Paperlogy/Nanum 폰트 실측 기준 em의 22~28%
-                # Gmarket Sans는 공백 글리프 없어 폰트 측정 불가 → em 기준 고정
+                words = [w for w in clean_line.split(' ') if w]
                 space_w = int(font_size * 0.22)
                 word_widths = [self.get_text_width(w, font) for w in words]
                 total_w = sum(word_widths) + space_w * (len(words) - 1)
-                cur_x = (width - total_w) // 2
+
+                # 수평 시작 X
+                if h_pos == 'left':
+                    cur_x = margin
+                elif h_pos == 'right':
+                    cur_x = width - margin - total_w
+                else:  # center
+                    cur_x = (width - total_w) // 2
+
                 for j, word in enumerate(words):
                     if word:
                         draw.text((cur_x, current_y), word, fill=text_color, font=font)
                     cur_x += word_widths[j] + (space_w if j < len(words) - 1 else 0)
             else:
                 line_width = self.get_text_width(clean_line, font)
-                line_x = (width - line_width) // 2
+                if h_pos == 'left':
+                    line_x = margin
+                elif h_pos == 'right':
+                    line_x = width - margin - line_width
+                else:  # center
+                    line_x = (width - line_width) // 2
                 draw.text((line_x, current_y), clean_line, fill=text_color, font=font)
 
-        print(f"커스텀 텍스트 추가 완료: '{title_text}' ({len(lines)}줄, 폰트: {font_size}pt, 색상: {text_color})")
+        print(f"텍스트 추가 완료: '{title_text}' ({len(lines)}줄, {font_size}pt, "
+              f"위치:{text_position}, 비율:{font_size_ratio})")
         return image
 
     def generate_filename(self):
