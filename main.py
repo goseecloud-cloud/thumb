@@ -504,17 +504,14 @@ class ThumbnailGenerator:
         line_height = font_size
         actual_total_height = (len(lines) - 1) * (line_height * line_spacing) + line_height
 
-        # 위치 파싱
-        parts = text_position.split('-')
-        v_pos = parts[0] if len(parts) >= 1 else 'middle'   # top / middle / bottom
-        h_pos = parts[1] if len(parts) >= 2 else 'center'   # left / center / right
+        # 수직 위치만 적용 — 좌우는 항상 가운데 정렬
+        v_pos = text_position.split('-')[0]  # top / middle / bottom
 
-        # 수직 시작 Y
         if v_pos == 'top':
             start_y = margin
         elif v_pos == 'bottom':
             start_y = height - margin - actual_total_height
-        else:  # middle
+        else:  # middle (기본)
             start_y = (height - actual_total_height) // 2
 
         for i, line in enumerate(lines):
@@ -528,27 +525,14 @@ class ThumbnailGenerator:
                 space_w = int(font_size * 0.22)
                 word_widths = [self.get_text_width(w, font) for w in words]
                 total_w = sum(word_widths) + space_w * (len(words) - 1)
-
-                # 수평 시작 X
-                if h_pos == 'left':
-                    cur_x = margin
-                elif h_pos == 'right':
-                    cur_x = width - margin - total_w
-                else:  # center
-                    cur_x = (width - total_w) // 2
-
+                cur_x = (width - total_w) // 2  # 항상 가운데
                 for j, word in enumerate(words):
                     if word:
                         draw.text((cur_x, current_y), word, fill=text_color, font=font)
                     cur_x += word_widths[j] + (space_w if j < len(words) - 1 else 0)
             else:
                 line_width = self.get_text_width(clean_line, font)
-                if h_pos == 'left':
-                    line_x = margin
-                elif h_pos == 'right':
-                    line_x = width - margin - line_width
-                else:  # center
-                    line_x = (width - line_width) // 2
+                line_x = (width - line_width) // 2  # 항상 가운데
                 draw.text((line_x, current_y), clean_line, fill=text_color, font=font)
 
         print(f"텍스트 추가 완료: '{title_text}' ({len(lines)}줄, {font_size}pt, "

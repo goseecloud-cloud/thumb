@@ -1145,6 +1145,21 @@
                 <div class="color-swatch" data-color="#f0abfc" style="background:#f0abfc;" title="보라색" onclick="selectColor(this)"></div>
               </div>
             </div>
+
+            <!-- 글자 크기 슬라이더 (폰트 카드로 이동) -->
+            <div class="form-group">
+              <label>글자 크기</label>
+              <div class="font-size-slider-wrap">
+                <span style="font-size:12px;color:var(--text-muted);">작게</span>
+                <input type="range" id="font-size-slider" min="60" max="100" value="80"
+                       oninput="onFontSizeSlider(this.value)" />
+                <span style="font-size:12px;color:var(--text-muted);">크게</span>
+                <span class="font-size-label" id="font-size-val">보통</span>
+              </div>
+              <div class="font-size-hints">
+                <span>작게</span><span></span><span>보통</span><span></span><span>크게</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1204,52 +1219,46 @@
               </div>
             </div>
 
-            <!-- 글자 크기 슬라이더 -->
+            <!-- 텍스트 위치 (수직만 적용 / 좌우 항상 가운데) -->
             <div class="form-group">
-              <label>글자 크기</label>
-              <div class="font-size-slider-wrap">
-                <span style="font-size:12px;color:var(--text-muted);">작게</span>
-                <input type="range" id="font-size-slider" min="60" max="100" value="80"
-                       oninput="onFontSizeSlider(this.value)" />
-                <span style="font-size:12px;color:var(--text-muted);">크게</span>
-                <span class="font-size-label" id="font-size-val">보통</span>
-              </div>
-              <div class="font-size-hints">
-                <span>60%</span><span>70%</span><span>80%</span><span>90%</span><span>100%</span>
-              </div>
-            </div>
-
-            <!-- 텍스트 위치 -->
-            <div class="form-group">
-              <label>텍스트 위치</label>
-              <div class="position-grid" id="position-grid">
-                <button class="pos-btn" data-pos="top-left"     onclick="selectPosition(this)" title="좌상단">
-                  <svg viewBox="0 0 10 10"><rect x="0" y="0" width="5" height="3"/></svg>
-                </button>
-                <button class="pos-btn" data-pos="top-center"   onclick="selectPosition(this)" title="상단 중앙">
-                  <svg viewBox="0 0 10 10"><rect x="2.5" y="0" width="5" height="3"/></svg>
-                </button>
-                <button class="pos-btn" data-pos="top-right"    onclick="selectPosition(this)" title="우상단">
-                  <svg viewBox="0 0 10 10"><rect x="5" y="0" width="5" height="3"/></svg>
-                </button>
-                <button class="pos-btn" data-pos="middle-left"  onclick="selectPosition(this)" title="좌중앙">
-                  <svg viewBox="0 0 10 10"><rect x="0" y="3.5" width="5" height="3"/></svg>
-                </button>
-                <button class="pos-btn selected" data-pos="middle-center" onclick="selectPosition(this)" title="정중앙 (기본)">
-                  <svg viewBox="0 0 10 10"><rect x="2.5" y="3.5" width="5" height="3"/></svg>
-                </button>
-                <button class="pos-btn" data-pos="middle-right" onclick="selectPosition(this)" title="우중앙">
-                  <svg viewBox="0 0 10 10"><rect x="5" y="3.5" width="5" height="3"/></svg>
-                </button>
-                <button class="pos-btn" data-pos="bottom-left"  onclick="selectPosition(this)" title="좌하단">
-                  <svg viewBox="0 0 10 10"><rect x="0" y="7" width="5" height="3"/></svg>
-                </button>
-                <button class="pos-btn" data-pos="bottom-center" onclick="selectPosition(this)" title="하단 중앙">
-                  <svg viewBox="0 0 10 10"><rect x="2.5" y="7" width="5" height="3"/></svg>
-                </button>
-                <button class="pos-btn" data-pos="bottom-right" onclick="selectPosition(this)" title="우하단">
-                  <svg viewBox="0 0 10 10"><rect x="5" y="7" width="5" height="3"/></svg>
-                </button>
+              <label>텍스트 위치 <span style="font-size:11px;color:var(--text-muted);font-weight:400;">— 좌우는 항상 가운데</span></label>
+              <div style="display:flex;gap:12px;align-items:center;">
+                <!-- 행 라벨 -->
+                <div style="display:flex;flex-direction:column;gap:6px;">
+                  <span style="font-size:11px;color:var(--text-muted);height:44px;display:flex;align-items:center;">상단</span>
+                  <span style="font-size:11px;color:var(--text-muted);height:44px;display:flex;align-items:center;">중앙</span>
+                  <span style="font-size:11px;color:var(--text-muted);height:44px;display:flex;align-items:center;">하단</span>
+                </div>
+                <!-- 3×3 그리드 -->
+                <div class="position-grid" id="position-grid">
+                  <button class="pos-btn" data-pos="top-left"      onclick="selectPosition(this)" title="상단">
+                    <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="3" width="16" height="5" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                  </button>
+                  <button class="pos-btn" data-pos="top-center"    onclick="selectPosition(this)" title="상단">
+                    <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="3" width="16" height="5" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                  </button>
+                  <button class="pos-btn" data-pos="top-right"     onclick="selectPosition(this)" title="상단">
+                    <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="3" width="16" height="5" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                  </button>
+                  <button class="pos-btn" data-pos="middle-left"   onclick="selectPosition(this)" title="중앙">
+                    <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="6.5" width="16" height="5" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                  </button>
+                  <button class="pos-btn selected" data-pos="middle-center" onclick="selectPosition(this)" title="중앙 (기본)">
+                    <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="6.5" width="16" height="5" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                  </button>
+                  <button class="pos-btn" data-pos="middle-right"  onclick="selectPosition(this)" title="중앙">
+                    <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="6.5" width="16" height="5" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                  </button>
+                  <button class="pos-btn" data-pos="bottom-left"   onclick="selectPosition(this)" title="하단">
+                    <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="10" width="16" height="5" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                  </button>
+                  <button class="pos-btn" data-pos="bottom-center" onclick="selectPosition(this)" title="하단">
+                    <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="10" width="16" height="5" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                  </button>
+                  <button class="pos-btn" data-pos="bottom-right"  onclick="selectPosition(this)" title="하단">
+                    <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="4" y="10" width="16" height="5" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1731,38 +1740,27 @@
       ctx.textAlign    = 'center';
       ctx.textBaseline = 'alphabetic';
 
-      // 위치(position)에 따른 startY / baseX 계산
+      // 수직 위치만 적용 — 좌우는 항상 가운데 정렬
       const totalH = (lines.length - 1) * lineH + fsize;
-      const [vPos, hPos] = selectedPosition.split('-');  // e.g. 'middle-center' → ['middle','center']
+      const vPos = selectedPosition.split('-')[0]; // top / middle / bottom
 
-      // 수직 위치
       let startY;
       if (vPos === 'top')         startY = textMargin;
       else if (vPos === 'bottom') startY = ch - textMargin - totalH;
-      else                        startY = (ch - totalH) / 2;  // middle (기본)
-
-      // 수평 기준점
-      let baseX;
-      if (hPos === 'left')        baseX = textMargin;
-      else if (hPos === 'right')  baseX = cw - textMargin;
-      else                        baseX = cw / 2;  // center (기본)
+      else                        startY = (ch - totalH) / 2; // middle (기본)
 
       lines.forEach((line, i) => {
         const cleanLine = line.trim();
         if (!cleanLine) return;
         const y = startY + i * lineH + fsize;
 
-        // 공백 포함 줄은 단어별로 쪼개서 각각 렌더링 (tofu 박스 완전 방지)
+        // 공백 포함 줄: 단어별 렌더링 (tofu 방지) — 항상 수평 가운데
         if (cleanLine.includes(' ')) {
           const words = cleanLine.split(' ').filter(w => w.length > 0);
           const spaceW = fsize * 0.22;
           const wordWidths = words.map(w => ctx.measureText(w).width);
           const totalW = wordWidths.reduce((a, b) => a + b, 0) + spaceW * (words.length - 1);
-          // 수평 위치에 따라 시작 X 결정
-          let curX;
-          if (hPos === 'left')       curX = textMargin;
-          else if (hPos === 'right') curX = cw - textMargin - totalW;
-          else                       curX = (cw - totalW) / 2;
+          let curX = (cw - totalW) / 2; // 항상 가운데
           ctx.textAlign = 'left';
           words.forEach((word, j) => {
             if (word) ctx.fillText(word, curX, y);
@@ -1770,18 +1768,7 @@
           });
           ctx.textAlign = 'center';
         } else {
-          // 단일 단어: 수평 align 적용
-          if (hPos === 'left') {
-            ctx.textAlign = 'left';
-            ctx.fillText(cleanLine, textMargin, y);
-            ctx.textAlign = 'center';
-          } else if (hPos === 'right') {
-            ctx.textAlign = 'right';
-            ctx.fillText(cleanLine, cw - textMargin, y);
-            ctx.textAlign = 'center';
-          } else {
-            ctx.fillText(cleanLine, cw / 2, y);
-          }
+          ctx.fillText(cleanLine, cw / 2, y); // 항상 가운데
         }
       });
     }
