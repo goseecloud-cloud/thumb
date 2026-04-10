@@ -1545,21 +1545,24 @@
 
           const tokens = tokenize(paragraph);
           let cur = '';
+          let pendingSpace = false;  // 공백 플래그 (직접 붙이지 않음)
 
           for (const tok of tokens) {
             if (tok === ' ') {
-              // 공백: 현재 줄이 있으면 공백 추가(줄 끝 공백은 출력 시 무시됨)
-              if (cur) cur += ' ';
+              if (cur) pendingSpace = true;  // 단어 사이 공백 예약
               continue;
             }
 
-            const test = cur ? cur + tok : tok;
+            // 공백 포함 테스트 문자열
+            const test = cur ? cur + (pendingSpace ? ' ' : '') + tok : tok;
 
             if (ctx.measureText(test).width <= maxW) {
               cur = test;
+              pendingSpace = false;
             } else {
-              // 현재 줄 확정 (끝 공백 제거)
-              if (cur.trimEnd()) lines.push(cur.trimEnd());
+              // 현재 줄 확정
+              if (cur) lines.push(cur);
+              pendingSpace = false;
 
               // 토큰 자체가 maxW 초과하면 글자 단위 강제 분리
               if (ctx.measureText(tok).width > maxW) {
@@ -1579,7 +1582,7 @@
               }
             }
           }
-          if (cur.trimEnd()) lines.push(cur.trimEnd());
+          if (cur) lines.push(cur);
         }
         return lines.length ? lines : [''];
       }
