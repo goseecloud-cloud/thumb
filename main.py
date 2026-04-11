@@ -97,46 +97,48 @@ class ThumbnailGenerator:
             raise Exception(f"이미지 파일 오류: 올바른 이미지 형식이 아닙니다. {str(e)}")
 
     def crop_to_square(self, image):
-        """
-        이미지를 정방형으로 크롭 (중심 기준, 짧은 축 기준)
-        
-        Args:
-            image (PIL.Image): 원본 이미지
-            
-        Returns:
-            PIL.Image: 정방형으로 크롭된 이미지
-        """
-        width, height = image.size
-        
-        # 짧은 축을 기준으로 정방형 크기 결정
-        crop_size = min(width, height)
-        
-        # 중심점 계산
-        left = (width - crop_size) // 2
-        top = (height - crop_size) // 2
-        right = left + crop_size
-        bottom = top + crop_size
-        
-        # 크롭 실행
-        cropped_image = image.crop((left, top, right, bottom))
-        print(f"정방형 크롭 완료: {cropped_image.size}")
-        
-        return cropped_image
+        """정방형 크롭 (하위 호환용 - crop_cover 호출)"""
+        return self.crop_cover(image, (1080, 1080))
 
-    def resize_image(self, image, target_size):
+    def crop_cover(self, image, target_size):
         """
-        이미지를 지정된 크기로 리사이징
-        
+        CSS object-fit: cover 방식으로 중앙 크롭 후 리사이징
+        - 비율을 유지하면서 target_size를 완전히 채우도록 확대/축소
+        - 넘치는 부분은 중앙 기준으로 잘라냄
+        - 억지로 늘리거나 찌그러지지 않음
+
         Args:
             image (PIL.Image): 원본 이미지
             target_size (tuple): 목표 크기 (width, height)
-            
+
         Returns:
-            PIL.Image: 리사이징된 이미지
+            PIL.Image: 크롭 & 리사이징된 이미지
         """
-        resized_image = image.resize(target_size, Image.Resampling.LANCZOS)
-        print(f"리사이징 완료: {resized_image.size}")
-        return resized_image
+        src_w, src_h = image.size
+        tgt_w, tgt_h = target_size
+
+        # 목표 비율을 채우기 위한 scale 계산 (cover = max)
+        scale = max(tgt_w / src_w, tgt_h / src_h)
+
+        # 비율 유지 리사이징
+        new_w = int(src_w * scale)
+        new_h = int(src_h * scale)
+        resized = image.resize((new_w, new_h), Image.Resampling.LANCZOS)
+
+        # 중앙 크롭
+        left = (new_w - tgt_w) // 2
+        top  = (new_h - tgt_h) // 2
+        result = resized.crop((left, top, left + tgt_w, top + tgt_h))
+
+        print(f"cover 크롭 완료: {image.size} → {result.size} (scale={scale:.2f})")
+        return result
+
+    def resize_image(self, image, target_size):
+        """
+        cover 방식으로 리사이징 (crop_cover 호출)
+        - 기존 단순 resize() 대신 비율 유지 + 중앙 크롭 적용
+        """
+        return self.crop_cover(image, target_size)
 
     def apply_dark_overlay(self, image, opacity=0.43):
         """

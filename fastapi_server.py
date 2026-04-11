@@ -133,16 +133,15 @@ def _create_thumbnail_image(
     if image.mode != "RGB":
         image = image.convert("RGB")
 
-    # Shape-based resize
+    # Shape-based resize — 모든 비율에서 cover(중앙 크롭) 방식 적용
     if shape == "landscape":
         target = (1280, 720)
     elif shape == "portrait":
         target = (720, 1280)
     else:
         target = (1080, 1080)
-        image = generator.crop_to_square(image)
 
-    image = generator.resize_image(image, target)
+    image = generator.crop_cover(image, target)
     image = generator.apply_dark_overlay(image, overlay_opacity)
 
     if border:
