@@ -455,7 +455,7 @@ class ThumbnailGenerator:
     def add_text_overlay_custom(self, image, title_text, text_color='white',
                                 font_size_ratio=1.0, text_position='middle-center'):
         """
-        이미지에 제목 텍스트 추가 (크기 비율·위치 지원)
+        이미지에 제목 텍스트 추가 (크기 비율·9방향 위치 지원)
 
         Args:
             image (PIL.Image): 원본 이미지
@@ -471,16 +471,22 @@ class ThumbnailGenerator:
         draw = ImageDraw.Draw(image)
         width, height = image.size
 
-        # 테두리 안쪽 내부 여백
-        inner_pad = 56
+        # 테두리 안쪽 내부 여백 (이미지 크기 기준으로 스케일)
+        scale = width / 1080
+        inner_pad = round(56 * scale)
         margin = self.border_margin + self.border_width + inner_pad
-        text_area_width = width - 2 * margin
+        text_area_width  = width  - 2 * margin
         text_area_height = height - 2 * margin
 
-        # 글자 크기: 기본값에 비율 적용
-        base_font_size = int(self.default_font_size * max(0.4, min(1.0, font_size_ratio)))
+        # 위치 파싱
+        parts  = text_position.split('-')
+        v_pos  = parts[0] if len(parts) > 0 else 'middle'   # top / middle / bottom
+        h_pos  = parts[1] if len(parts) > 1 else 'center'   # left / center / right
+
+        # 글자 크기: 기본값(220)에 이미지 scale 및 비율 적용
+        base_font_size = int(220 * scale * max(0.4, min(1.0, font_size_ratio)))
         font_size = base_font_size
-        min_font_size = 40
+        min_font_size = max(20, int(40 * scale))
 
         while font_size >= min_font_size:
             font = self.load_font(font_size)
@@ -491,11 +497,11 @@ class ThumbnailGenerator:
             elif n == 3: line_spacing = 1.05
             else:        line_spacing = 1.00
             total_width, total_height = self.calculate_multiline_text_size(lines, font, line_spacing)
-            if total_width <= text_area_width and total_height <= text_area_height:
+            if total_height <= text_area_height:
                 break
-            font_size -= 10
+            font_size -= max(1, round(font_size * 0.08))
 
-        font = self.load_font(font_size)
+        font  = self.load_font(font_size)
         lines = self.wrap_text(title_text, font, text_area_width)
         n = len(lines)
         if n <= 1:   line_spacing = 1.15
@@ -503,18 +509,17 @@ class ThumbnailGenerator:
         elif n == 3: line_spacing = 1.05
         else:        line_spacing = 1.00
 
-        line_height = font_size
+        line_height        = font_size
         actual_total_height = (len(lines) - 1) * (line_height * line_spacing) + line_height
+        space_w = int(font_size * 0.22)
 
-        # 수직 위치만 적용 — 좌우는 항상 가운데 정렬
-        v_pos = text_position.split('-')[0]  # top / middle / bottom
-
+        # ── 수직 기준점 ──
         if v_pos == 'top':
             start_y = margin
         elif v_pos == 'bottom':
             start_y = height - margin - actual_total_height
-        else:  # middle (기본)
-            start_y = (height - actual_total_height) // 2
+        else:  # middle
+            start_y = (height - actual_total_height) / 2
 
         for i, line in enumerate(lines):
             clean_line = line.strip()
@@ -522,20 +527,33 @@ class ThumbnailGenerator:
                 continue
             current_y = start_y + int(i * line_height * line_spacing)
 
+            # 줄 전체 폭 계산
             if ' ' in clean_line:
-                words = [w for w in clean_line.split(' ') if w]
-                space_w = int(font_size * 0.22)
+                words      = [w for w in clean_line.split(' ') if w]
                 word_widths = [self.get_text_width(w, font) for w in words]
-                total_w = sum(word_widths) + space_w * (len(words) - 1)
-                cur_x = (width - total_w) // 2  # 항상 가운데
+                line_w     = sum(word_widths) + space_w * (len(words) - 1)
+            else:
+                line_w = self.get_text_width(clean_line, font)
+
+            # ── 수평 기준점 ──
+            if h_pos == 'left':
+                start_x = margin
+            elif h_pos == 'right':
+                start_x = width - margin - line_w
+            else:  # center
+                start_x = (width - line_w) / 2
+
+            # ── 렌더링 ──
+            if ' ' in clean_line:
+                words      = [w for w in clean_line.split(' ') if w]
+                word_widths = [self.get_text_width(w, font) for w in words]
+                cur_x = start_x
                 for j, word in enumerate(words):
                     if word:
-                        draw.text((cur_x, current_y), word, fill=text_color, font=font)
+                        draw.text((int(cur_x), current_y), word, fill=text_color, font=font)
                     cur_x += word_widths[j] + (space_w if j < len(words) - 1 else 0)
             else:
-                line_width = self.get_text_width(clean_line, font)
-                line_x = (width - line_width) // 2  # 항상 가운데
-                draw.text((line_x, current_y), clean_line, fill=text_color, font=font)
+                draw.text((int(start_x), current_y), clean_line, fill=text_color, font=font)
 
         print(f"텍스트 추가 완료: '{title_text}' ({len(lines)}줄, {font_size}pt, "
               f"위치:{text_position}, 비율:{font_size_ratio})")
