@@ -317,6 +317,19 @@
       color: var(--text-muted);
       margin-bottom: 24px;
     }
+    .drop-zone-empty p kbd {
+      display: inline-block;
+      padding: 1px 6px;
+      font-size: 11px;
+      font-family: monospace;
+      font-weight: 700;
+      color: var(--text-secondary);
+      background: var(--surface3, #2a2d3e);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      box-shadow: 0 1px 0 var(--border);
+      vertical-align: middle;
+    }
     .drop-zone input[type="file"] {
       position: absolute;
       inset: 0;
@@ -1045,7 +1058,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
             <h3>이미지를 여기에 놓으세요</h3>
-            <p>또는 클릭해서 파일을 선택하세요</p>
+            <p>클릭해서 선택 · 드래그 앤 드롭 · <kbd>Ctrl+V</kbd> 붙여넣기</p>
             <span class="btn-upload">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/></svg>
               파일 선택
@@ -1472,6 +1485,28 @@
     if (file && file.type.startsWith('image/')) setFile(file);
     else showToast('이미지 파일만 업로드할 수 있습니다.', 'error');
   });
+
+  // ── 클립보드 붙여넣기 (Ctrl+V / 우클릭 붙여넣기) ──
+  document.addEventListener('paste', e => {
+    // 텍스트 입력 필드에 포커스 중이면 무시 (문구 입력 방해 안 함)
+    const active = document.activeElement;
+    if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) return;
+
+    const items = (e.clipboardData || window.clipboardData)?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (file) {
+          setFile(file);
+          showToast('클립보드 이미지를 붙여넣었습니다.', 'success');
+        }
+        return;
+      }
+    }
+    showToast('클립보드에 이미지가 없습니다.', 'error');
+  });
   fileInput.addEventListener('change', () => {
     if (fileInput.files[0]) setFile(fileInput.files[0]);
   });
@@ -1498,7 +1533,11 @@
       };
     };
     reader.readAsDataURL(file);
-    document.getElementById('preview-name').textContent = file.name;
+    // 붙여넣기 이미지는 name이 없거나 'image.png' 등으로 오므로 표시 보정
+    const displayName = (file.name && file.name !== 'image.png' && file.name !== 'image.jpeg')
+      ? file.name
+      : `클립보드 이미지 (${file.type.split('/')[1] || 'png'})`;
+    document.getElementById('preview-name').textContent = displayName;
     document.getElementById('preview-size').textContent = formatBytes(file.size);
 
     // 드롭존 → 이미지 모드 전환
