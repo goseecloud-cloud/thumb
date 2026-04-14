@@ -255,6 +255,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      outline: none; /* 포커스 링 제거 */
     }
     /* 이미지 있을 때는 이미지 비율에 맞게 높이 자동 조정 */
     .drop-zone.has-image {
@@ -1050,7 +1051,7 @@
         <!-- 교체용 숨김 파일 인풋 -->
         <input type="file" id="file-input-change" accept="image/*" />
 
-        <div class="drop-zone" id="drop-zone">
+        <div class="drop-zone" id="drop-zone" tabindex="0">
           <!-- 기본(빈) 상태 -->
           <input type="file" id="file-input" accept="image/*" />
           <div class="drop-zone-empty" id="drop-empty">
@@ -1470,6 +1471,8 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
     // 2단계 진입 시 미리보기 그리기
     if (n === 2) schedulePreview();
+    // 1단계 복귀 시 drop-zone 포커스 복원 (Ctrl+V 계속 동작)
+    if (n === 1) setTimeout(focusDropZone, 100);
   }
 
   // ── File handling ──
@@ -1486,10 +1489,19 @@
     else showToast('이미지 파일만 업로드할 수 있습니다.', 'error');
   });
 
-  // ── 클립보드 붙여넣기 ──
-  // 방법1: paste 이벤트 (포커스된 요소가 있을 때 동작)
-  document.addEventListener('paste', e => {
-    // 텍스트 입력 필드에 포커스 중이면 무시
+  // ── 클립보드 붙여넣기 (Ctrl+V) ──
+  // paste 이벤트는 포커스된 요소에서 발생 → drop-zone을 tabindex=0으로 포커스 가능하게,
+  // 페이지 로드·스텝 진입 시 drop-zone에 포커스를 줘서 항상 Ctrl+V 수신
+  function focusDropZone() {
+    const dz = document.getElementById('drop-zone');
+    if (dz) dz.focus({ preventScroll: true });
+  }
+  // 페이지 로드 후 자동 포커스
+  focusDropZone();
+
+  // paste 이벤트: drop-zone 또는 document 모두에서 받음
+  function handlePaste(e) {
+    // textarea/input 포커스 중이면 무시 (문구 입력 방해 안 함)
     const active = document.activeElement;
     if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) return;
 
@@ -1497,47 +1509,18 @@
     if (!items) return;
     for (const item of items) {
       if (item.type.startsWith('image/')) {
+        e.preventDefault();
         const file = item.getAsFile();
-        if (file) { setFile(file); showToast('클립보드 이미지를 붙여넣었습니다.', 'success'); }
+        if (file) {
+          setFile(file);
+          showToast('클립보드 이미지를 붙여넣었습니다.', 'success');
+        }
         return;
       }
     }
-    // 이미지 없을 때는 조용히 무시 (텍스트 붙여넣기 방해 방지)
-  });
-
-  // 방법2: Ctrl+V keydown → Clipboard API (포커스 없어도 동작)
-  document.addEventListener('keydown', async e => {
-    // textarea/input에 포커스 중이면 무시
-    const active = document.activeElement;
-    if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) return;
-
-    if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
-      e.preventDefault();
-      try {
-        if (!navigator.clipboard?.read) {
-          showToast('이 브라우저는 클립보드 읽기를 지원하지 않습니다.', 'error');
-          return;
-        }
-        const clipItems = await navigator.clipboard.read();
-        for (const clipItem of clipItems) {
-          const imgType = clipItem.types.find(t => t.startsWith('image/'));
-          if (imgType) {
-            const blob = await clipItem.getType(imgType);
-            const file = new File([blob], `clipboard.${imgType.split('/')[1] || 'png'}`, { type: imgType });
-            setFile(file);
-            showToast('클립보드 이미지를 붙여넣었습니다.', 'success');
-            return;
-          }
-        }
-        showToast('클립보드에 이미지가 없습니다.', 'error');
-      } catch (err) {
-        // 권한 거부 등 — paste 이벤트 fallback 에 맡김
-        if (err.name !== 'NotAllowedError') {
-          showToast('클립보드 읽기 실패: ' + err.message, 'error');
-        }
-      }
-    }
-  });
+  }
+  document.addEventListener('paste', handlePaste);
+  dropZone.addEventListener('paste', handlePaste);
   fileInput.addEventListener('change', () => {
     if (fileInput.files[0]) setFile(fileInput.files[0]);
   });
