@@ -441,13 +441,30 @@
     #file-input-change { display: none; }
 
     /* ── Step 2 layout ── */
+    /* ── 3컬럼 레이아웃 ── */
     .step2-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1.2fr;
       gap: 20px;
+      align-items: start;
     }
-    @media (max-width: 900px) {
-      .step2-grid { grid-template-columns: 1fr; }
+    /* 미리보기 컬럼 sticky */
+    .preview-col {
+      position: sticky;
+      top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    /* 태블릿: 2컬럼 (디자인+텍스트 / 미리보기) */
+    @media (max-width: 1100px) {
+      .step2-grid { grid-template-columns: 1fr 1fr; }
+      .preview-col { grid-column: 1 / -1; position: static; }
+    }
+    /* 모바일: 1컬럼 세로 스택 */
+    @media (max-width: 700px) {
+      .step2-grid { grid-template-columns: 1fr; gap: 16px; }
+      .preview-col { grid-column: 1; position: static; }
     }
 
     /* ── 폰트 선택 카드 ── */
@@ -499,10 +516,7 @@
     }
 
     /* ── 실시간 미리보기 패널 ── */
-    .preview-panel {
-      position: sticky;
-      top: 24px;
-    }
+    .preview-panel { /* sticky는 .preview-col에서 처리 */ }
     .preview-canvas-wrap {
       background: #111;
       border-radius: var(--radius-sm);
@@ -1104,235 +1118,175 @@
   <div class="panel" id="panel-2">
     <div class="step2-grid">
 
-      <!-- Left col: 설정 패널들 -->
-      <div style="display:flex;flex-direction:column;gap:20px;">
-
-        <!-- 문구 + 폰트 선택 -->
-        <div class="card">
-          <div class="card-header">
-            <div class="icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-            </div>
-            <div>
-              <h2>썸네일 문구 &amp; 폰트</h2>
-              <p>텍스트와 폰트를 설정하세요</p>
-            </div>
+      <!-- 컬럼 1: 썸네일 디자인 (비율/필터/테두리/위치) -->
+      <div class="card">
+        <div class="card-header">
+          <div class="icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
           </div>
-          <div class="card-body">
-            <div class="form-group">
-              <label>문구 입력</label>
-              <textarea id="title-input" placeholder="예) 볼보 EX90 가격 | 제원 최저가 얼마&#10;사전예약 정보 정리" oninput="schedulePreview()"></textarea>
-            </div>
-
-            <div class="form-group">
-              <label>폰트 선택</label>
-              <div class="font-grid" id="font-grid">
-                <button class="font-btn selected" data-font="paperlogy" onclick="selectFont(this)">
-                  <div class="font-name">Paperlogy Bold</div>
-                  <div class="font-sample" id="sample-paperlogy" style="font-family:'Paperlogy'">썸네일 제목</div>
-                </button>
-                <button class="font-btn" data-font="blackhan" onclick="selectFont(this)">
-                  <div class="font-name">Gmarket Sans</div>
-                  <div class="font-sample" id="sample-blackhan" style="font-family:'GmarketSans'">썸네일 제목</div>
-                </button>
-                <button class="font-btn" data-font="nanum" onclick="selectFont(this)">
-                  <div class="font-name">Nanum Gothic Bold</div>
-                  <div class="font-sample" id="sample-nanum" style="font-family:'NanumGothicBold'">썸네일 제목</div>
-                </button>
-                <button class="font-btn" data-font="noto" onclick="selectFont(this)">
-                  <div class="font-name">Noto Sans KR</div>
-                  <div class="font-sample" id="sample-noto" style="font-family:'NotoSansKR'">썸네일 제목</div>
-                </button>
-              </div>
-            </div>
-
-
-
-            <div class="form-group">
-              <label>글자 색상</label>
-              <div class="color-grid" id="color-grid">
-                <div class="color-swatch selected" data-color="white" style="background:#ffffff;" title="흰색" onclick="selectColor(this)"></div>
-                <div class="color-swatch" data-color="yellow" style="background:#facc15;" title="노란색" onclick="selectColor(this)"></div>
-                <div class="color-swatch" data-color="#ff6b6b" style="background:#ff6b6b;" title="빨간색" onclick="selectColor(this)"></div>
-                <div class="color-swatch" data-color="#4ade80" style="background:#4ade80;" title="초록색" onclick="selectColor(this)"></div>
-                <div class="color-swatch" data-color="#60a5fa" style="background:#60a5fa;" title="파란색" onclick="selectColor(this)"></div>
-                <div class="color-swatch" data-color="#f0abfc" style="background:#f0abfc;" title="보라색" onclick="selectColor(this)"></div>
-              </div>
-            </div>
-
-            <!-- 글자 크기 슬라이더 (폰트 카드로 이동) -->
-            <div class="form-group">
-              <label>글자 크기</label>
-              <div class="font-size-slider-wrap">
-                <span style="font-size:12px;color:var(--text-muted);">작게</span>
-                <input type="range" id="font-size-slider" min="60" max="100" value="80"
-                       oninput="onFontSizeSlider(this.value)" />
-                <span style="font-size:12px;color:var(--text-muted);">크게</span>
-                <span class="font-size-label" id="font-size-val">보통</span>
-              </div>
-              <div class="font-size-hints">
-                <span>작게</span><span></span><span>보통</span><span></span><span>크게</span>
-              </div>
-            </div>
+          <div>
+            <h2>썸네일 디자인</h2>
+            <p>비율과 효과를 설정하세요</p>
           </div>
         </div>
-
-        <!-- 디자인 설정 -->
-        <div class="card">
-          <div class="card-header">
-            <div class="icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-            </div>
-            <div>
-              <h2>썸네일 디자인</h2>
-              <p>비율과 효과를 설정하세요</p>
+        <div class="card-body">
+          <div class="form-group">
+            <label>이미지 비율</label>
+            <div class="shape-grid">
+              <button class="shape-btn selected" data-shape="square" onclick="selectShape(this)">
+                <div class="shape-preview shape-square"></div>
+                <div class="shape-label">정방형</div>
+                <div class="shape-sub">1080×1080</div>
+              </button>
+              <button class="shape-btn" data-shape="landscape" onclick="selectShape(this)">
+                <div class="shape-preview shape-landscape"></div>
+                <div class="shape-label">가로형</div>
+                <div class="shape-sub">1280×720</div>
+              </button>
+              <button class="shape-btn" data-shape="portrait" onclick="selectShape(this)">
+                <div class="shape-preview shape-portrait"></div>
+                <div class="shape-label">세로형</div>
+                <div class="shape-sub">720×1280</div>
+              </button>
             </div>
           </div>
-          <div class="card-body">
-            <div class="form-group">
-              <label>이미지 비율</label>
-              <div class="shape-grid">
-                <button class="shape-btn selected" data-shape="square" onclick="selectShape(this)">
-                  <div class="shape-preview shape-square"></div>
-                  <div class="shape-label">정방형</div>
-                  <div class="shape-sub">1080×1080</div>
+
+          <div class="form-group">
+            <label>어두운 필터 강도</label>
+            <div class="range-wrap">
+              <input type="range" id="opacity-slider" min="10" max="90" value="50"
+                     oninput="document.getElementById('opacity-val').textContent=this.value+'%'; schedulePreview()" />
+              <span class="range-val" id="opacity-val">50%</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-title">흰색 테두리</div>
+                <div class="toggle-desc">이미지 안쪽에 흰색 사각 테두리 추가</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" id="border-toggle" checked onchange="schedulePreview()" />
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+              </label>
+            </div>
+          </div>
+
+          <!-- 텍스트 위치 -->
+          <div class="form-group" style="margin-bottom:0;">
+            <label>텍스트 위치</label>
+            <div style="display:flex;gap:12px;align-items:center;">
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <span style="font-size:11px;color:var(--text-muted);height:44px;display:flex;align-items:center;">상단</span>
+                <span style="font-size:11px;color:var(--text-muted);height:44px;display:flex;align-items:center;">중앙</span>
+                <span style="font-size:11px;color:var(--text-muted);height:44px;display:flex;align-items:center;">하단</span>
+              </div>
+              <div class="position-grid" id="position-grid">
+                <button class="pos-btn" data-pos="top-left" onclick="selectPosition(this)" title="상단 왼쪽">
+                  <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="3" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/></svg>
                 </button>
-                <button class="shape-btn" data-shape="landscape" onclick="selectShape(this)">
-                  <div class="shape-preview shape-landscape"></div>
-                  <div class="shape-label">가로형</div>
-                  <div class="shape-sub">1280×720</div>
+                <button class="pos-btn" data-pos="top-center" onclick="selectPosition(this)" title="상단 가운데">
+                  <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="3" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/></svg>
                 </button>
-                <button class="shape-btn" data-shape="portrait" onclick="selectShape(this)">
-                  <div class="shape-preview shape-portrait"></div>
-                  <div class="shape-label">세로형</div>
-                  <div class="shape-sub">720×1280</div>
+                <button class="pos-btn" data-pos="top-right" onclick="selectPosition(this)" title="상단 오른쪽">
+                  <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="3" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                </button>
+                <button class="pos-btn" data-pos="middle-left" onclick="selectPosition(this)" title="중앙 왼쪽">
+                  <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="7" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                </button>
+                <button class="pos-btn selected" data-pos="middle-center" onclick="selectPosition(this)" title="중앙 (기본)">
+                  <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="7" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                </button>
+                <button class="pos-btn" data-pos="middle-right" onclick="selectPosition(this)" title="중앙 오른쪽">
+                  <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="7" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                </button>
+                <button class="pos-btn" data-pos="bottom-left" onclick="selectPosition(this)" title="하단 왼쪽">
+                  <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="3" y="11" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                </button>
+                <button class="pos-btn" data-pos="bottom-center" onclick="selectPosition(this)" title="하단 가운데">
+                  <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="7" y="11" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/></svg>
+                </button>
+                <button class="pos-btn" data-pos="bottom-right" onclick="selectPosition(this)" title="하단 오른쪽">
+                  <svg viewBox="0 0 24 18" fill="none"><rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/><rect x="11" y="11" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/></svg>
                 </button>
               </div>
-            </div>
-
-            <div class="form-group">
-              <label>어두운 필터 강도</label>
-              <div class="range-wrap">
-                <input type="range" id="opacity-slider" min="10" max="90" value="50"
-                       oninput="document.getElementById('opacity-val').textContent=this.value+'%'; schedulePreview()" />
-                <span class="range-val" id="opacity-val">50%</span>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <div class="toggle-row">
-                <div class="toggle-info">
-                  <div class="toggle-title">흰색 테두리</div>
-                  <div class="toggle-desc">이미지 안쪽에 흰색 사각 테두리 추가</div>
-                </div>
-                <label class="toggle">
-                  <input type="checkbox" id="border-toggle" checked onchange="schedulePreview()" />
-                  <div class="toggle-track"></div>
-                  <div class="toggle-thumb"></div>
-                </label>
-              </div>
-            </div>
-
-            <!-- 텍스트 위치 (수직만 적용 / 좌우 항상 가운데) -->
-            <div class="form-group">
-              <label>텍스트 위치 <span style="font-size:11px;color:var(--text-muted);font-weight:400;">— 좌우는 항상 가운데</span></label>
-              <div style="display:flex;gap:12px;align-items:center;">
-                <!-- 행 라벨 -->
-                <div style="display:flex;flex-direction:column;gap:6px;">
-                  <span style="font-size:11px;color:var(--text-muted);height:44px;display:flex;align-items:center;">상단</span>
-                  <span style="font-size:11px;color:var(--text-muted);height:44px;display:flex;align-items:center;">중앙</span>
-                  <span style="font-size:11px;color:var(--text-muted);height:44px;display:flex;align-items:center;">하단</span>
-                </div>
-                <!-- 3×3 그리드 -->
-                <div class="position-grid" id="position-grid">
-                  <!-- 상단 좌 -->
-                  <button class="pos-btn" data-pos="top-left" onclick="selectPosition(this)" title="상단 왼쪽">
-                    <svg viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                      <rect x="3" y="3" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/>
-                    </svg>
-                  </button>
-                  <!-- 상단 중 -->
-                  <button class="pos-btn" data-pos="top-center" onclick="selectPosition(this)" title="상단 가운데">
-                    <svg viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                      <rect x="7" y="3" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/>
-                    </svg>
-                  </button>
-                  <!-- 상단 우 -->
-                  <button class="pos-btn" data-pos="top-right" onclick="selectPosition(this)" title="상단 오른쪽">
-                    <svg viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                      <rect x="11" y="3" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/>
-                    </svg>
-                  </button>
-                  <!-- 중앙 좌 -->
-                  <button class="pos-btn" data-pos="middle-left" onclick="selectPosition(this)" title="중앙 왼쪽">
-                    <svg viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                      <rect x="3" y="7" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/>
-                    </svg>
-                  </button>
-                  <!-- 중앙 중 (기본) -->
-                  <button class="pos-btn selected" data-pos="middle-center" onclick="selectPosition(this)" title="중앙 (기본)">
-                    <svg viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                      <rect x="7" y="7" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/>
-                    </svg>
-                  </button>
-                  <!-- 중앙 우 -->
-                  <button class="pos-btn" data-pos="middle-right" onclick="selectPosition(this)" title="중앙 오른쪽">
-                    <svg viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                      <rect x="11" y="7" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/>
-                    </svg>
-                  </button>
-                  <!-- 하단 좌 -->
-                  <button class="pos-btn" data-pos="bottom-left" onclick="selectPosition(this)" title="하단 왼쪽">
-                    <svg viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                      <rect x="3" y="11" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/>
-                    </svg>
-                  </button>
-                  <!-- 하단 중 -->
-                  <button class="pos-btn" data-pos="bottom-center" onclick="selectPosition(this)" title="하단 가운데">
-                    <svg viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                      <rect x="7" y="11" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/>
-                    </svg>
-                  </button>
-                  <!-- 하단 우 -->
-                  <button class="pos-btn" data-pos="bottom-right" onclick="selectPosition(this)" title="하단 오른쪽">
-                    <svg viewBox="0 0 24 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <rect x="1" y="1" width="22" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                      <rect x="11" y="11" width="10" height="4" rx="1" fill="currentColor" opacity="0.85"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="error-box" id="error-box">
-              <strong>오류가 발생했습니다.</strong><br/><span id="error-msg"></span>
-            </div>
-
-            <div class="btn-row" style="margin-top:16px;">
-              <button class="btn btn-outline" onclick="goToStep(1)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                이전
-              </button>
-              <button class="btn btn-primary" id="btn-generate" onclick="generate()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                바로 생성하기!
-              </button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Right col: 실시간 미리보기 -->
-      <div class="preview-panel">
-        <div class="card">
+      <!-- 컬럼 2: 썸네일 문구 & 폰트 -->
+      <div class="card">
+        <div class="card-header">
+          <div class="icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+          </div>
+          <div>
+            <h2>썸네일 문구 &amp; 폰트</h2>
+            <p>텍스트와 폰트를 설정하세요</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label>문구 입력</label>
+            <textarea id="title-input" placeholder="예) 볼보 EX90 가격 | 제원 최저가 얼마&#10;사전예약 정보 정리" oninput="schedulePreview()"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>폰트 선택</label>
+            <div class="font-grid" id="font-grid">
+              <button class="font-btn selected" data-font="paperlogy" onclick="selectFont(this)">
+                <div class="font-name">Paperlogy Bold</div>
+                <div class="font-sample" id="sample-paperlogy" style="font-family:'Paperlogy'">썸네일 제목</div>
+              </button>
+              <button class="font-btn" data-font="blackhan" onclick="selectFont(this)">
+                <div class="font-name">Gmarket Sans</div>
+                <div class="font-sample" id="sample-blackhan" style="font-family:'GmarketSans'">썸네일 제목</div>
+              </button>
+              <button class="font-btn" data-font="nanum" onclick="selectFont(this)">
+                <div class="font-name">Nanum Gothic Bold</div>
+                <div class="font-sample" id="sample-nanum" style="font-family:'NanumGothicBold'">썸네일 제목</div>
+              </button>
+              <button class="font-btn" data-font="noto" onclick="selectFont(this)">
+                <div class="font-name">Noto Sans KR</div>
+                <div class="font-sample" id="sample-noto" style="font-family:'NotoSansKR'">썸네일 제목</div>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>글자 색상</label>
+            <div class="color-grid" id="color-grid">
+              <div class="color-swatch selected" data-color="white" style="background:#ffffff;" title="흰색" onclick="selectColor(this)"></div>
+              <div class="color-swatch" data-color="yellow" style="background:#facc15;" title="노란색" onclick="selectColor(this)"></div>
+              <div class="color-swatch" data-color="#ff6b6b" style="background:#ff6b6b;" title="빨간색" onclick="selectColor(this)"></div>
+              <div class="color-swatch" data-color="#4ade80" style="background:#4ade80;" title="초록색" onclick="selectColor(this)"></div>
+              <div class="color-swatch" data-color="#60a5fa" style="background:#60a5fa;" title="파란색" onclick="selectColor(this)"></div>
+              <div class="color-swatch" data-color="#f0abfc" style="background:#f0abfc;" title="보라색" onclick="selectColor(this)"></div>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <label>글자 크기</label>
+            <div class="font-size-slider-wrap">
+              <span style="font-size:12px;color:var(--text-muted);">작게</span>
+              <input type="range" id="font-size-slider" min="30" max="100" value="75"
+                     oninput="onFontSizeSlider(this.value)" />
+              <span style="font-size:12px;color:var(--text-muted);">크게</span>
+              <span class="font-size-label" id="font-size-val">크게</span>
+            </div>
+            <div class="font-size-hints">
+              <span>아주 작게</span><span>작게</span><span>보통</span><span>크게</span><span>아주 크게</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 컬럼 3: 실시간 미리보기 + 버튼 -->
+      <div class="preview-col">
+        <div class="card preview-panel">
           <div class="card-header">
             <div class="icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -1351,9 +1305,26 @@
               </div>
             </div>
             <p style="font-size:11px;color:var(--text-dim);margin-top:10px;text-align:center;">
-              ※ 미리보기는 근사치입니다. 실제 생성 결과와 약간 다를 수 있습니다.
+              ※ 미리보기는 실제 결과와 동일합니다.
             </p>
           </div>
+        </div>
+
+        <!-- 오류 박스 -->
+        <div class="error-box" id="error-box">
+          <strong>오류가 발생했습니다.</strong><br/><span id="error-msg"></span>
+        </div>
+
+        <!-- 이전 / 생성하기 버튼 -->
+        <div class="btn-row">
+          <button class="btn btn-outline" onclick="goToStep(1)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+            이전
+          </button>
+          <button class="btn btn-primary" id="btn-generate" onclick="generate()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            바로 생성하기!
+          </button>
         </div>
       </div>
 
@@ -1412,7 +1383,7 @@
   let currentStep = 1;
   let previewTimer = null;
   let uploadedImageBitmap = null; // 캔버스용 원본 이미지
-  let selectedFontSizeRatio = 0.80; // 글자 크기 비율 (0.6 ~ 1.0)
+  let selectedFontSizeRatio = 0.75; // 글자 크기 비율 (0.4 ~ 1.0)
   let selectedPosition = 'middle-center'; // 텍스트 위치
 
   // ── 폰트 로드 (FontFace API) ──
@@ -1621,11 +1592,15 @@
   function onFontSizeSlider(val) {
     const ratio = parseInt(val) / 100;
     selectedFontSizeRatio = ratio;
-    // 라벨
-    const labels = { 60:'아주 작게', 70:'작게', 80:'보통', 90:'크게', 100:'아주 크게' };
-    const snap = Math.round(ratio * 10) * 10; // 10단위로 반올림
-    document.getElementById('font-size-val').textContent =
-      labels[snap] || Math.round(ratio * 100) + '%';
+    // 라벨 (30~100 범위)
+    const v = parseInt(val);
+    let label;
+    if (v <= 38)      label = '아주 작게';
+    else if (v <= 52) label = '작게';
+    else if (v <= 64) label = '보통';
+    else if (v <= 80) label = '크게';
+    else              label = '아주 크게';
+    document.getElementById('font-size-val').textContent = label;
     schedulePreview();
   }
 
@@ -1687,12 +1662,31 @@
     ctx.fillStyle = `rgba(0,0,0,${opacity})`;
     ctx.fillRect(0, 0, cw, ch);
 
-    // 3) 테두리 — 백엔드와 동일: 2중선 (margin=30, border=6, gap=12)
+    // 3) 테두리 — 백엔드와 완전히 동일한 계산
+    // 백엔드: border_margin=30px, border_width=6px (절대값), output 크기 기준
+    // 프론트: output 크기→canvas 크기로 스케일 변환
     const hasBorder = document.getElementById('border-toggle').checked;
-    const BORDER_MARGIN = Math.round(cw * (30 / 1080));
-    const BORDER_WIDTH  = Math.max(1, Math.round(cw * (6 / 1080)));
-    const BORDER_GAP    = BORDER_WIDTH + Math.round(cw * (6 / 1080)); // gap = border_width + 6
-    const INNER_PAD     = Math.round(cw * (56 / 1080));
+    const outputW = selectedShape === 'landscape' ? 1280
+                  : selectedShape === 'portrait'  ? 720
+                  : 1080;
+    const outputH = selectedShape === 'landscape' ? 720
+                  : selectedShape === 'portrait'  ? 1280
+                  : 1080;
+    const canvasScale = cw / outputW;          // canvas ÷ 실제출력 비율
+
+    // 백엔드 출력 픽셀 기준 값
+    const OUT_BORDER_MARGIN = 30;              // main.py border_margin
+    const OUT_BORDER_WIDTH  = 6;              // main.py border_width
+    const OUT_GAP           = OUT_BORDER_WIDTH + 6; // gap = border_width + 6
+    const OUT_SCALE         = outputW / 1080;  // main.py scale
+    const OUT_INNER_PAD     = Math.round(56 * OUT_SCALE); // main.py inner_pad
+
+    // 캔버스 픽셀로 변환
+    const BORDER_MARGIN = Math.round(OUT_BORDER_MARGIN * canvasScale);
+    const BORDER_WIDTH  = Math.max(1, Math.round(OUT_BORDER_WIDTH  * canvasScale));
+    const BORDER_GAP    = Math.max(1, Math.round(OUT_GAP           * canvasScale));
+    const INNER_PAD     = Math.round(OUT_INNER_PAD * canvasScale);
+
     if (hasBorder) {
       ctx.strokeStyle = 'white';
       ctx.lineWidth = BORDER_WIDTH;
@@ -1709,7 +1703,7 @@
       );
     }
 
-    // 4) 텍스트 — 9방향 위치 + 백엔드 동일 계산
+    // 4) 텍스트 — 9방향 위치 + 백엔드 완전 동일 계산
     const rawTitle = document.getElementById('title-input').value;
     const title = normalizeText(rawTitle);
     if (title) {
@@ -1718,18 +1712,17 @@
       await document.fonts.ready;
       const fontName = FONTS[selectedFont]?.name || 'Paperlogy';
 
-      // ── 백엔드와 동일한 scale 기준 계산 ──
-      const scale      = cw / 1080;
-      const innerPad   = Math.round(56 * scale);
-      const textMargin = hasBorder
-        ? BORDER_MARGIN + BORDER_WIDTH + innerPad
-        : innerPad;
+      // ── 백엔드와 동일: margin = border_margin + border_width + inner_pad (출력 기준 → canvas 변환) ──
+      const outTextMargin = hasBorder
+        ? OUT_BORDER_MARGIN + OUT_BORDER_WIDTH + OUT_INNER_PAD
+        : OUT_INNER_PAD;
+      const textMargin = Math.round(outTextMargin * canvasScale);
       const maxW = cw - textMargin * 2;
       const maxH = ch - textMargin * 2;
 
-      // 백엔드와 동일: 220 * scale * ratio
-      let fsize = Math.round(220 * scale * selectedFontSizeRatio);
-      const minFsize = Math.max(8, Math.round(40 * scale));
+      // 백엔드와 동일: 220 * (outputW/1080) * ratio → canvas로 변환 (ratio 0.3~1.0)
+      let fsize = Math.round(220 * OUT_SCALE * Math.max(0.3, selectedFontSizeRatio) * canvasScale);
+      const minFsize = Math.max(8, Math.round(12 * canvasScale));
 
       // 위치 파싱 (백엔드와 동일)
       const posParts = selectedPosition.split('-');
@@ -1950,9 +1943,9 @@
     selectedFont = 'paperlogy';
     selectedFontSize = 225;
     // 글자 크기 슬라이더 초기화
-    document.getElementById('font-size-slider').value = 80;
-    document.getElementById('font-size-val').textContent = '보통';
-    selectedFontSizeRatio = 0.80;
+    document.getElementById('font-size-slider').value = 75;
+    document.getElementById('font-size-val').textContent = '크게';
+    selectedFontSizeRatio = 0.75;
     // 텍스트 위치 초기화
     document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('selected'));
     document.querySelector('[data-pos="middle-center"]').classList.add('selected');

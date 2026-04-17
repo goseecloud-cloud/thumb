@@ -299,7 +299,7 @@ async def generate_thumbnail_by_file(
             title,
             shape=shape,
             font_size=font_size if font_size > 0 else None,
-            font_size_ratio=max(0.4, min(1.0, font_size_ratio)),
+            font_size_ratio=max(0.3, min(1.0, font_size_ratio)),
             text_position=text_position,
             border=(border.lower() == "true"),
             text_color=text_color,

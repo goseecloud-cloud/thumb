@@ -484,7 +484,7 @@ class ThumbnailGenerator:
         h_pos  = parts[1] if len(parts) > 1 else 'center'   # left / center / right
 
         # 글자 크기: 기본값(220)에 이미지 scale 및 비율 적용
-        base_font_size = int(220 * scale * max(0.4, min(1.0, font_size_ratio)))
+        base_font_size = int(220 * scale * max(0.3, min(1.0, font_size_ratio)))
         font_size = base_font_size
         min_font_size = max(20, int(40 * scale))
 
