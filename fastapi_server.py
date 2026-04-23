@@ -24,7 +24,7 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 
 # ── 자동 파일 정리 설정 ──
 FILE_MAX_AGE_SECONDS = 60 * 60      # 1시간 지난 파일 삭제
-CLEANUP_INTERVAL_SECONDS = 60 * 10  # 10분마다 정리 실행
+CLEANUP_INTERVAL_SECONDS = 60 * 60  # 1시간마다 정리 실행
 
 
 def cleanup_old_files():
