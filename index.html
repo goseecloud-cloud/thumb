@@ -44,8 +44,8 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* 우클릭 방지 및 드래그 방지 (선택/드래그만 차단, 클릭은 허용) */
-    img, canvas, #result-img, #preview-img, .preview-canvas, #preview-canvas {
+    /* 우클릭 방지 및 드래그 방지 (result-img 제외 — 결과 이미지는 우클릭 복사 허용) */
+    canvas, #preview-img, .preview-canvas, #preview-canvas {
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
@@ -2045,12 +2045,11 @@
     setTimeout(() => t.classList.remove('show'), 3500);
   }
 
-  // ── 우클릭 방지 ──
+  // ── 우클릭 방지 (result-img 제외 — 결과 이미지는 우클릭 복사 허용) ──
   document.addEventListener('contextmenu', function(e) {
     const target = e.target;
-    if (target.tagName === 'IMG' || 
-        target.tagName === 'CANVAS' || 
-        target.id === 'result-img' || 
+    if (target.id === 'result-img') return; // 결과 이미지는 허용
+    if (target.tagName === 'CANVAS' ||
         target.id === 'preview-img' ||
         target.id === 'preview-canvas') {
       e.preventDefault();
@@ -2058,10 +2057,11 @@
     }
   });
 
-  // 드래그 방지
+  // 드래그 방지 (result-img 제외)
   document.addEventListener('dragstart', function(e) {
     const target = e.target;
-    if (target.tagName === 'IMG' || target.tagName === 'CANVAS') {
+    if (target.id === 'result-img') return; // 결과 이미지는 드래그도 허용
+    if (target.tagName === 'CANVAS') {
       e.preventDefault();
       return false;
     }
