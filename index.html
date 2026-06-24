@@ -528,6 +528,50 @@
       width: 100%;
       height: auto;
       display: block;
+      cursor: context-menu;
+    }
+
+    /* ── 미리보기 캔버스 우클릭 커스텀 메뉴 ── */
+    #canvas-context-menu {
+      position: fixed;
+      z-index: 9999;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      padding: 6px 0;
+      min-width: 160px;
+      display: none;
+      animation: fadeInMenu 0.12s ease;
+    }
+    @keyframes fadeInMenu {
+      from { opacity: 0; transform: scale(0.95); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    #canvas-context-menu .ctx-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.12s;
+      user-select: none;
+    }
+    #canvas-context-menu .ctx-item:hover {
+      background: var(--primary);
+      color: #fff;
+    }
+    #canvas-context-menu .ctx-item .ctx-icon {
+      font-size: 15px;
+      width: 18px;
+      text-align: center;
+    }
+    #canvas-context-menu .ctx-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
     }
     .preview-loading {
       position: absolute;
@@ -2057,13 +2101,111 @@
     setTimeout(() => t.classList.remove('show'), 3500);
   }
 
-  // ── 우클릭 방지 (result-img 제외 — 결과 이미지는 우클릭 복사 허용) ──
+  // ── 미리보기 캔버스 우클릭 커스텀 컨텍스트 메뉴 ──
+  (function() {
+    const menu = document.getElementById('canvas-context-menu');
+    const previewCanvas = document.getElementById('preview-canvas');
+
+    // 메뉴 닫기
+    function closeMenu() {
+      if (menu) menu.style.display = 'none';
+    }
+
+    // 메뉴 열기
+    function openMenu(x, y) {
+      if (!menu) return;
+      menu.style.display = 'block';
+      // 화면 밖으로 넘치지 않도록 조정
+      const mw = menu.offsetWidth || 180;
+      const mh = menu.offsetHeight || 100;
+      const vw = window.innerWidth, vh = window.innerHeight;
+      menu.style.left = (x + mw > vw ? vw - mw - 8 : x) + 'px';
+      menu.style.top  = (y + mh > vh ? vh - mh - 8 : y) + 'px';
+    }
+
+    // preview-canvas 우클릭 → 커스텀 메뉴 표시
+    if (previewCanvas) {
+      previewCanvas.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        openMenu(e.clientX, e.clientY);
+      });
+    }
+
+    // 클립보드에 캔버스 이미지 복사
+    async function copyCanvasToClipboard() {
+      closeMenu();
+      const canvas = document.getElementById('preview-canvas');
+      if (!canvas) { showToast('캔버스를 찾을 수 없습니다.', 'error'); return; }
+
+      try {
+        // navigator.clipboard.write 지원 여부 확인
+        if (navigator.clipboard && window.ClipboardItem) {
+          const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': blob })
+          ]);
+          showToast('미리보기 이미지가 클립보드에 복사되었습니다! 📋', 'success');
+        } else {
+          // 폴백: 새 탭으로 열기 (클립보드 API 미지원 브라우저)
+          const dataUrl = canvas.toDataURL('image/png');
+          const win = window.open();
+          if (win) {
+            win.document.write(`<img src="${dataUrl}" style="max-width:100%"><br>
+              <p style="font-family:sans-serif;color:#666">이미지를 우클릭 → 이미지 복사 하세요</p>`);
+          } else {
+            showToast('팝업이 차단되었습니다. 팝업을 허용해주세요.', 'error');
+          }
+        }
+      } catch(err) {
+        console.error('클립보드 복사 실패:', err);
+        // 추가 폴백: 이미지 새 탭으로 열기
+        try {
+          const dataUrl = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.href = dataUrl;
+          link.download = 'preview.png';
+          link.click();
+          showToast('클립보드 복사 대신 파일로 다운로드합니다.', 'info');
+        } catch(e2) {
+          showToast('복사에 실패했습니다: ' + err.message, 'error');
+        }
+      }
+    }
+
+    // 캔버스 이미지 다운로드
+    function downloadCanvas() {
+      closeMenu();
+      const canvas = document.getElementById('preview-canvas');
+      if (!canvas) return;
+      const link = document.createElement('a');
+      link.download = 'preview-thumbnail.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('미리보기 이미지 다운로드 시작!', 'success');
+    }
+
+    // 메뉴 버튼 이벤트
+    const btnCopy = document.getElementById('ctx-copy-canvas');
+    const btnSave = document.getElementById('ctx-save-canvas');
+    if (btnCopy) btnCopy.addEventListener('click', copyCanvasToClipboard);
+    if (btnSave) btnSave.addEventListener('click', downloadCanvas);
+
+    // 메뉴 외부 클릭 / 스크롤 / ESC 시 닫기
+    document.addEventListener('click', function(e) {
+      if (menu && !menu.contains(e.target)) closeMenu();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeMenu();
+    });
+    document.addEventListener('scroll', closeMenu, true);
+  })();
+
+  // ── 우클릭 방지 (result-img, preview-canvas 제외) ──
   document.addEventListener('contextmenu', function(e) {
     const target = e.target;
-    if (target.id === 'result-img') return; // 결과 이미지는 허용
-    if (target.tagName === 'CANVAS' ||
-        target.id === 'preview-img' ||
-        target.id === 'preview-canvas') {
+    if (target.id === 'result-img') return;    // 결과 이미지는 기본 허용
+    if (target.id === 'preview-canvas') return; // preview-canvas는 커스텀 메뉴로 처리
+    if (target.tagName === 'CANVAS' || target.id === 'preview-img') {
       e.preventDefault();
       return false;
     }
@@ -2072,13 +2214,26 @@
   // 드래그 방지 (result-img 제외)
   document.addEventListener('dragstart', function(e) {
     const target = e.target;
-    if (target.id === 'result-img') return; // 결과 이미지는 드래그도 허용
+    if (target.id === 'result-img') return;
     if (target.tagName === 'CANVAS') {
       e.preventDefault();
       return false;
     }
   });
 </script>
+
+<!-- 미리보기 캔버스 우클릭 커스텀 메뉴 -->
+<div id="canvas-context-menu">
+  <div class="ctx-item" id="ctx-copy-canvas">
+    <span class="ctx-icon">📋</span>
+    <span>이미지 복사</span>
+  </div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" id="ctx-save-canvas">
+    <span class="ctx-icon">💾</span>
+    <span>미리보기 저장</span>
+  </div>
+</div>
 <!-- 쿠팡 파트너스 팝업 모달 -->
 <!-- 쿠팡 파트너스 팝업 (임시 비활성화) -->
 <div class="coupang-overlay" id="coupang-overlay" style="display:none !important">
