@@ -138,6 +138,8 @@ def _create_thumbnail_image(
         target = (1280, 720)
     elif shape == "portrait":
         target = (720, 1280)
+    elif shape == "small":
+        target = (768, 432)
     else:
         target = (1080, 1080)
 
