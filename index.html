@@ -184,11 +184,47 @@
       max-width: 60px;
     }
 
+    /* ── Page wrapper (사이드 광고 포함 전체 레이아웃) ── */
+    .page-wrapper {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+      max-width: 1540px;
+      margin: 0 auto;
+    }
+
+    /* ── 사이드 광고 컬럼 ── */
+    .side-ad {
+      flex-shrink: 0;
+      width: 160px;
+      padding-top: 48px;
+      display: none; /* 기본 숨김 — 넓은 화면에서만 표시 */
+    }
+    .side-ad-inner {
+      position: sticky;
+      top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+    }
+    /* 1400px 이상에서 사이드 광고 표시 */
+    @media (min-width: 1400px) {
+      .side-ad { display: block; }
+      .side-ad.left  { padding-right: 12px; }
+      .side-ad.right { padding-left:  12px; }
+    }
+
     /* ── Main layout ── */
     main {
+      flex: 1;
       position: relative;
       z-index: 10;
       max-width: 1100px;
+      width: 100%;
       margin: 0 auto;
       padding: 0 24px 80px;
     }
@@ -1003,6 +1039,15 @@
       .card-body { padding: 20px; }
     }
 
+    /* ── 사이드 광고 ins 스타일 ── */
+    .side-ad .adsbygoogle {
+      display: block !important;
+      width: 160px !important;
+      min-height: 600px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
     /* ── 쿠팡 팝업 모달 ── */
     .coupang-overlay {
       display: none;
@@ -1091,7 +1136,22 @@
   </div>
 </div>
 
-<!-- ── Main ── -->
+<!-- ── 페이지 래퍼 (main + 사이드 광고) ── -->
+<div class="page-wrapper">
+
+<!-- 왼쪽 사이드 광고 -->
+<aside class="side-ad left" aria-label="광고">
+  <div class="side-ad-inner">
+    <ins class="adsbygoogle"
+         style="display:block;width:160px;height:600px"
+         data-ad-client="ca-pub-1217533439838380"
+         data-ad-slot="5486654377"
+         data-ad-format="auto"
+         data-full-width-responsive="false"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+</aside>
+
 <main>
 
   <!-- ===== STEP 1: Upload ===== -->
@@ -1422,6 +1482,21 @@
   </div>
 
 </main>
+
+<!-- 오른쪽 사이드 광고 -->
+<aside class="side-ad right" aria-label="광고">
+  <div class="side-ad-inner">
+    <ins class="adsbygoogle"
+         style="display:block;width:160px;height:600px"
+         data-ad-client="ca-pub-1217533439838380"
+         data-ad-slot="5486654377"
+         data-ad-format="auto"
+         data-full-width-responsive="false"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+</aside>
+
+</div><!-- /.page-wrapper -->
 
 <script>
   // ── State ──
