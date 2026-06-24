@@ -1796,19 +1796,21 @@
         return 1.00;
       }
 
-      // 폰트 크기 자동 조정 (백엔드와 동일: 8% 씩 줄임)
+      // 폰트 크기 자동 조정 — 백엔드와 동일하게 실제 텍스트 높이(≈font*0.86) 기준
+      const TEXT_HEIGHT_RATIO = 0.86; // Paperlogy 실측: actual_height / font_size ≈ 0.86
       let lines = wrapText(title, fsize);
       while (fsize > minFsize) {
         const n = lines.length;
-        const totalH = (n - 1) * fsize * getLineSpacing(n) + fsize;
+        const lineH_actual = fsize * TEXT_HEIGHT_RATIO;
+        const totalH = (n - 1) * lineH_actual * getLineSpacing(n) + lineH_actual;
         if (totalH <= maxH) break;
         fsize -= Math.max(1, Math.round(fsize * 0.08));
         lines = wrapText(title, fsize);
       }
 
       const lineSpacing = getLineSpacing(lines.length);
-      const lineH  = fsize * lineSpacing;
-      const totalH = (lines.length - 1) * lineH + fsize;
+      const lineH  = fsize * TEXT_HEIGHT_RATIO * lineSpacing;
+      const totalH = (lines.length - 1) * lineH + fsize * TEXT_HEIGHT_RATIO;
       const spaceW = fsize * 0.22;
 
       ctx.font = `bold ${fsize}px '${fontName}', sans-serif`;
@@ -1827,7 +1829,8 @@
       lines.forEach((line, i) => {
         const cleanLine = line.trim();
         if (!cleanLine) return;
-        const y = startY + i * lineH + fsize;
+        // alphabetic baseline: startY는 텍스트 블록 top, fsize*0.86 만큼 내려서 baseline 맞춤
+        const y = startY + i * lineH + fsize * TEXT_HEIGHT_RATIO;
 
         // 줄 폭 계산 (공백 있으면 단어 단위)
         let lineW;
