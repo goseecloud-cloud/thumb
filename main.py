@@ -473,7 +473,7 @@ class ThumbnailGenerator:
 
         # 테두리 안쪽 내부 여백 (이미지 크기 기준으로 스케일)
         scale = width / 1080
-        inner_pad = round(56 * scale)
+        inner_pad = round(36 * scale)
         margin = self.border_margin + self.border_width + inner_pad
         text_area_width  = width  - 2 * margin
         text_area_height = height - 2 * margin

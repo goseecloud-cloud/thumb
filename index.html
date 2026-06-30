@@ -1802,11 +1802,11 @@
     const canvasScale = cw / outputW;          // canvas ÷ 실제출력 비율
 
     // 백엔드 출력 픽셀 기준 값
-    const OUT_BORDER_MARGIN = 30;              // main.py border_margin
+    const OUT_BORDER_MARGIN = 18;              // main.py border_margin
     const OUT_BORDER_WIDTH  = 6;              // main.py border_width
     const OUT_GAP           = OUT_BORDER_WIDTH + 6; // gap = border_width + 6
     const OUT_SCALE         = outputW / 1080;  // main.py scale
-    const OUT_INNER_PAD     = Math.round(56 * OUT_SCALE); // main.py inner_pad
+    const OUT_INNER_PAD     = Math.round(36 * OUT_SCALE); // main.py inner_pad
 
     // 캔버스 픽셀로 변환
     const BORDER_MARGIN = Math.round(OUT_BORDER_MARGIN * canvasScale);
