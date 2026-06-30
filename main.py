@@ -492,10 +492,10 @@ class ThumbnailGenerator:
             font = self.load_font(font_size)
             lines = self.wrap_text(title_text, font, text_area_width)
             n = len(lines)
-            if n <= 1:   line_spacing = 1.15
-            elif n == 2: line_spacing = 1.10
-            elif n == 3: line_spacing = 1.05
-            else:        line_spacing = 1.00
+            if n <= 1:   line_spacing = 1.20
+            elif n == 2: line_spacing = 1.18
+            elif n == 3: line_spacing = 1.15
+            else:        line_spacing = 1.10
             total_width, total_height = self.calculate_multiline_text_size(lines, font, line_spacing)
             if total_height <= text_area_height:
                 break
@@ -504,10 +504,10 @@ class ThumbnailGenerator:
         font  = self.load_font(font_size)
         lines = self.wrap_text(title_text, font, text_area_width)
         n = len(lines)
-        if n <= 1:   line_spacing = 1.15
-        elif n == 2: line_spacing = 1.10
-        elif n == 3: line_spacing = 1.05
-        else:        line_spacing = 1.00
+        if n <= 1:   line_spacing = 1.20
+        elif n == 2: line_spacing = 1.18
+        elif n == 3: line_spacing = 1.15
+        else:        line_spacing = 1.10
 
         line_height        = font_size
         actual_total_height = (len(lines) - 1) * (line_height * line_spacing) + line_height
